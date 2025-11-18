@@ -1,0 +1,16 @@
+logging:
+  level:
+    org.opendevstack.apiservice.externalservice.ocp: DEBUG
+
+# OpenShift Configuration for Integration Tests
+externalservice:
+  openshift:
+    instances:
+      # Cluster A OpenShift instance
+      cluster-a:
+        api-url: ${OPENSHIFT_CLUSTER_A_API_URL:https://api.cluster-a.ocp.example.com:6443}
+        token: ${OPENSHIFT_US_TEST_TOKEN:your-token-here}
+        namespace: ${OPENSHIFT_US_TEST_NAMESPACE:example-project-cd}
+        connection-timeout: 30000
+        read-timeout: 30000
+        trust-all-certificates: ${OPENSHIFT_US_TEST_TRUST_ALL:true}

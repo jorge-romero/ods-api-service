@@ -1,0 +1,6 @@
+---
+name: Devstack API Service
+description: API service for OpenDevStack
+supplier: https://www.opendevstack.org
+version: 4.x
+type: ods

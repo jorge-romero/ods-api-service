@@ -1,0 +1,90 @@
+name: Build and Release Latest
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master, develop ]    
+  workflow_dispatch:
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4.2.2
+      with:
+        fetch-depth: 0 # Needed full history for tags
+ 
+    - name: Set up JDK 21 with maven cache
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Package application
+      run: ./mvnw package -DskipTests -B
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: |
+          docker/*.jar
+        retention-days: 1
+
+    - name: Create or move latest tag
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git tag -f latest
+        git push origin latest --force
+
+    - name: Create or update latest release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: latest
+        name: Latest build
+        body_path: CHANGELOG.md
+        prerelease: true
+        draft: false
+        files: docker/*.jar
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}      
+
+  ods-api-service:
+    needs: build
+    name: Build and Push ods-api-service Docker Image
+    runs-on: ubuntu-22.04
+    steps:
+      -
+        name: Checkout repository
+        uses: actions/checkout@v4.2.2
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: ./docker
+      
+      - name: Build docker image
+        run: |
+          ./.github/workflows/build-docker-image.sh \
+          --imagename ods-api-service \
+          --dockerdir docker \
+          --dockerfile Dockerfile
+     # - name: Push docker image
+     #   if: success() && github.repository == 'opendevstack/ods-api-service' && github.event_name == 'push'
+     #   shell: bash
+     #   env:
+     #     DOCKER_USER: ${{ secrets.DockerHubUser }}
+     #     DOCKER_PASS: ${{ secrets.DockerHubPass }}
+     #   run: |
+     #     ./.github/workflows/push-docker-image.sh \
+     #     --user "$DOCKER_USER" \
+     #     --password "$DOCKER_PASS" \
+     #     --imagename ods-api-service

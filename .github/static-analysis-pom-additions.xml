@@ -1,0 +1,143 @@
+<!-- 
+  STATIC ANALYSIS POM.XML ADDITIONS
+  
+  Add these configurations to your root pom.xml to enable all static analysis tools.
+  Replace the existing spotbugs plugin configuration if present.
+-->
+
+<!-- ============================================== -->
+<!-- 1. ADD TO <properties> SECTION -->
+<!-- ============================================== -->
+<checkstyle.version>10.12.5</checkstyle.version>
+<maven-checkstyle-plugin.version>3.3.1</maven-checkstyle-plugin.version>
+<maven-pmd-plugin.version>3.21.2</maven-pmd-plugin.version>
+<pmd.version>6.55.0</pmd.version>
+<dependency-check-maven.version>9.0.7</dependency-check-maven.version>
+
+
+<!-- ============================================== -->
+<!-- 2. ADD TO <build><pluginManagement><plugins> -->
+<!-- ============================================== -->
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-checkstyle-plugin</artifactId>
+    <version>${maven-checkstyle-plugin.version}</version>
+    <dependencies>
+        <dependency>
+            <groupId>com.puppycrawl.tools</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>${checkstyle.version}</version>
+        </dependency>
+    </dependencies>
+</plugin>
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-pmd-plugin</artifactId>
+    <version>${maven-pmd-plugin.version}</version>
+    <dependencies>
+        <dependency>
+            <groupId>net.sourceforge.pmd</groupId>
+            <artifactId>pmd-core</artifactId>
+            <version>${pmd.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sourceforge.pmd</groupId>
+            <artifactId>pmd-java</artifactId>
+            <version>${pmd.version}</version>
+        </dependency>
+    </dependencies>
+</plugin>
+<plugin>
+    <groupId>org.owasp</groupId>
+    <artifactId>dependency-check-maven</artifactId>
+    <version>${dependency-check-maven.version}</version>
+</plugin>
+
+
+<!-- ============================================== -->
+<!-- 3. ADD TO <build><plugins> SECTION -->
+<!--    (or UPDATE existing spotbugs configuration) -->
+<!-- ============================================== -->
+
+<!-- SpotBugs - Bug Detection -->
+<plugin>
+    <groupId>com.github.spotbugs</groupId>
+    <artifactId>spotbugs-maven-plugin</artifactId>
+    <configuration>
+        <effort>Max</effort>
+        <threshold>Low</threshold>
+        <xmlOutput>true</xmlOutput>
+        <excludeFilterFile>.github/spotbugs-exclude.xml</excludeFilterFile>
+        <failOnError>false</failOnError>
+    </configuration>
+</plugin>
+
+<!-- Checkstyle - Code Style -->
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-checkstyle-plugin</artifactId>
+    <configuration>
+        <configLocation>google_checks.xml</configLocation>
+        <suppressionsLocation>.github/checkstyle-suppressions.xml</suppressionsLocation>
+        <suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
+        <consoleOutput>true</consoleOutput>
+        <failsOnError>false</failsOnError>
+        <violationSeverity>warning</violationSeverity>
+    </configuration>
+</plugin>
+
+<!-- PMD - Code Quality -->
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-pmd-plugin</artifactId>
+    <configuration>
+        <rulesets>
+            <ruleset>.github/pmd-ruleset.xml</ruleset>
+        </rulesets>
+        <printFailingErrors>true</printFailingErrors>
+        <failOnViolation>false</failOnViolation>
+        <linkXRef>false</linkXRef>
+        <sourceEncoding>UTF-8</sourceEncoding>
+        <minimumTokens>100</minimumTokens>
+        <targetJdk>21</targetJdk>
+    </configuration>
+</plugin>
+
+
+<!-- ============================================== -->
+<!-- OPTIONAL: Add to <reporting><plugins> for site generation -->
+<!-- ============================================== -->
+<reporting>
+    <plugins>
+        <plugin>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-maven-plugin</artifactId>
+        </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-checkstyle-plugin</artifactId>
+            <reportSets>
+                <reportSet>
+                    <reports>
+                        <report>checkstyle</report>
+                    </reports>
+                </reportSet>
+            </reportSets>
+        </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-pmd-plugin</artifactId>
+        </plugin>
+        <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <reportSets>
+                <reportSet>
+                    <reports>
+                        <report>report</report>
+                    </reports>
+                </reportSet>
+            </reportSets>
+        </plugin>
+    </plugins>
+</reporting>

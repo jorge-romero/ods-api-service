@@ -1,0 +1,103 @@
+openapi: 3.0.3
+info:
+  title: ODS API Server
+  description: API documentation for ODS (Open DevStack) API Service
+  contact:
+    name: EDPCore Team
+    url: https://confluence.biscrum.com/pages/viewpage.action?spaceKey=EDP&title=Welcome
+  version: v0.0.1
+servers:
+  - url: http://{baseurl}/api/v1
+    variables:
+      baseurl:
+        default: localhost:8080
+        description: Development environment
+tags:
+- name: Project platform
+  description: API for managing project platform information
+paths:
+  /projects/{projectKey}/platforms:
+    get:
+      tags:
+      - Projects
+      summary: Get platform information for a given project key.
+      description: Returns disabled platforms and categorized platform links for the specified project.
+      operationId: getProjectPlatforms
+      parameters:
+      - name: projectKey
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Project key to retrieve platform information.
+      responses:
+        '200':
+          description: Platform information for the project.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectPlatforms'
+        "401":
+          description: Invalid client token on the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+components:
+  schemas:
+    RestErrorMessage:
+      properties:
+        message:
+          type: string
+      required:
+        - message
+    Link:
+      type: object
+      properties:
+        label:
+          type: string
+        url:
+          type: string
+        tooltip:
+          type: string
+        type:
+          type: string
+        abbreviation:
+          type: string
+        disabled:
+          type: boolean
+      required:
+        - label
+        - url
+        - tooltip
+        - type
+        - abbreviation
+        - disabled
+    Section:
+      type: object
+      properties:
+        section:
+          type: string
+        tooltip:
+          type: string
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+      required:
+        - section
+        - tooltip
+        - links
+    ProjectPlatforms:
+      type: object
+      properties:
+        sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/Section'

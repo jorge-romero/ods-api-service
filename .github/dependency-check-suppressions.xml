@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+     "-//OWASP//DTD Dependency-Check Suppression 1.3//EN"
+     "https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.dtd">
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <!-- Add suppressions for false positives here -->
+    <!-- Example:
+    <suppress>
+       <notes>False positive - not applicable to our usage</notes>
+       <cve>CVE-2021-12345</cve>
+    </suppress>
+    -->
+</suppressions>

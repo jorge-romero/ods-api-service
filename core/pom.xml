@@ -1,0 +1,229 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.opendevstack.apiservice</groupId>
+        <artifactId>devstack-api-service</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>core</artifactId>
+    <name>Core</name>
+    <description>Core module for API Service</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Spring Boot Security for open all paths and disabling CORS -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
+        <!-- Spring Boot Actuator for monitoring and management -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- SpringDoc OpenAPI for Swagger -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+
+        <!-- External Service AAP (Ansible Automation Platform) module -->
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>external-service-ocp</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+
+        <!-- External Service AAP (Ansible Automation Platform) module -->
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>external-service-aap</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- External Service UIPath module -->
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>external-service-uipath</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- External Service webhookproxy module -->
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>external-service-webhookproxy</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>external-service-projects-info-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>external-service-bitbucket</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>api-project-users</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>api-project-platform</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- OpenTelemetry for observability -->
+        <dependency>
+            <groupId>io.opentelemetry.instrumentation</groupId>
+            <artifactId>opentelemetry-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- Lombok for reducing boilerplate code -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <finalName>app</finalName>
+        <plugins>
+            <!-- Spring Boot -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>org.opendevstack.apiservice.core.DevstackApiServiceApplication</mainClass>
+                    <outputDirectory>../docker</outputDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>build-info</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Generate git.properties for Actuator /actuator/info (git section) -->
+            <plugin>
+                <groupId>pl.project13.maven</groupId>
+                <artifactId>git-commit-id-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>revision</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <skip>true</skip>
+                    <!-- Put the generated git.properties into the classes output dir so Spring Boot
+                    auto-detects it -->
+                    <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                    <failOnNoGitDirectory>false</failOnNoGitDirectory>
+                    <!-- Restrict generated properties to only commit id (full & abbreviated) -->
+                    <includeOnlyProperties>
+                        <includeOnlyProperty>git.commit.id</includeOnlyProperty>
+                        <includeOnlyProperty>git.commit.id.abbrev</includeOnlyProperty>
+                    </includeOnlyProperties>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>${maven.surefire.report.plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <configuration>
+                    <xmlOutput>true</xmlOutput>
+                    <xmlOutputDirectory>target/site</xmlOutputDirectory>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
+
+    <profiles>
+        <profile>
+            <id>native</id>
+            <build>
+                <plugins>
+                    <!-- Native compilation -->
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>compile-no-fork</goal>
+                                </goals>
+                                <configuration>
+                                    <mainClass>
+                                        org.opendevstack.apiservice.core.DevstackApiServiceApplication</mainClass>
+                                    <imageName>app</imageName>
+                                    <buildArgs>
+                                        <buildArg>-J-Xms2g</buildArg>
+                                        <buildArg>-J-Xmx4g</buildArg>
+                                        <buildArg>-Ob</buildArg>
+                                        <buildArg>--no-fallback</buildArg>
+                                        <buildArg>--install-exit-handlers</buildArg>
+                                        <buildArg>--report-unsupported-elements-at-runtime</buildArg>
+                                        <buildArg>--verbose</buildArg>
+                                    </buildArgs>
+                                    <outputDirectory>../docker</outputDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+            <properties>
+                <skipTests>true</skipTests>
+            </properties>
+        </profile>
+    </profiles>
+</project>

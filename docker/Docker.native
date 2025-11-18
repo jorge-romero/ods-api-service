@@ -1,0 +1,7 @@
+FROM registry.access.redhat.com/ubi9/ubi-minimal
+
+COPY app app
+
+EXPOSE 8080
+
+CMD ["./app"]

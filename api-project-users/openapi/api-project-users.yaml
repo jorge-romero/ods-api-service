@@ -1,0 +1,372 @@
+openapi: 3.0.3
+info:
+  title: ODS API Server
+  description: API documentation for ODS (Open DevStack) API Service
+  contact:
+    name: EDPCore Team
+    url: https://confluence.biscrum.com/pages/viewpage.action?spaceKey=EDP&title=Welcome
+  version: v0.0.1
+servers:
+  - url: http://{baseurl}/api/v1
+    variables:
+      baseurl:
+        default: localhost:8080
+        description: Development environment
+tags:
+- name: Project Users
+  description: API for managing project users and their roles
+paths:
+  /project/{projectKey}/users:
+    post:
+      tags:
+      - Project Users
+      summary: Trigger membership request
+      description: Triggers a membership request for a user to join a project with
+        the specified role
+      operationId: triggerMembershipRequest
+      parameters:
+      - name: projectKey
+        in: path
+        description: Project identifier
+        required: true
+        schema:
+          type: string
+        example: my-project
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddUserToProjectRequest"
+        required: true
+      responses:
+        "201":
+          description: Membership request triggered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMembershipRequestResponse"
+        "400":
+          description: Validation failed - invalid request data with detailed field-level
+            error information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+        "401":
+          description: Unauthorized - authentication required or token invalid/expired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMembershipRequestResponse"
+        "403":
+          description: Forbidden - authenticated but insufficient permissions to perform
+            this operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMembershipRequestResponse"
+        "409":
+          description: User already has a pending or existing membership in project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMembershipRequestResponse"
+        "404":
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMembershipRequestResponse"
+        "502":
+          description: External automation platform service error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMembershipRequestResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMembershipRequestResponse"
+  /project/{projectKey}/users/{userid}/status:
+    get:
+      tags:
+      - Project Users
+      summary: Get membership request status
+      description: Retrieves the current status of a membership request
+      operationId: getRequestStatus
+      parameters:
+      - name: projectKey
+        in: path
+        description: Project identifier
+        required: true
+        schema:
+          type: string
+        example: my-project
+      - name: userid
+        in: path
+        description: User identifier
+        required: true
+        schema:
+          type: string
+        example: doejohn
+      - name: requestId
+        in: query
+        description: Request ID for status tracking
+        required: true
+        schema:
+          type: string
+        example: req_abc123def456
+      responses:
+        "200":
+          description: Request status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMembershipRequestStatusResponse"
+        "400":
+          description: Invalid request ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMembershipRequestStatusResponse"
+        "401":
+          description: Unauthorized - authentication required or token invalid/expired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMembershipRequestStatusResponse"
+        "403":
+          description: Forbidden - authenticated but insufficient permissions to access
+            this resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMembershipRequestStatusResponse"
+        "404":
+          description: Request not found or expired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMembershipRequestStatusResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMembershipRequestStatusResponse"
+components:
+  schemas:
+    BaseApiResponse:
+      type: object
+      description: Base API response wrapper with common fields
+      required:
+        - success
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the request was successful
+          example: true
+        message:
+          type: string
+          description: Response message
+          example: Operation completed successfully
+        error:
+          type: string
+          description: Error details or error code if any (populated when success is false)
+          example: null
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp (ISO 8601 format)
+          example: "2023-10-01T12:34:56Z"
+    AddUserToProjectRequest:
+      type: object
+      description: User details and role information
+      properties:
+        environment:
+          type: string
+          description: Environment where the user will be added
+          example: PRODUCTIVE
+          minLength: 1
+          pattern: ^(PRODUCTIVE|QUALITYASSURANCE|DEVELOPMENT)$
+        user:
+          type: string
+          description: Identifier of the user (short name)
+          example: doejohn
+          minLength: 1
+          pattern: "^[a-zA-Z0-9]+$"
+        account:
+          type: string
+          description: Account identifier of the user if it is not the same than the
+            user
+          example: doejane
+          pattern: "^[a-zA-Z0-9]+$"
+        role:
+          type: string
+          description: Role to assign to the user in the project, TEAM, MANAGER, STAKEHOLDER, VM, etc.
+          example: TEAM
+          pattern: "^[a-zA-Z]+[a-zA-Z_-]*$"
+        comments:
+          type: string
+          description: Additional comments
+          example: Adding team member for development
+      required:
+      - environment
+      - role
+      - user
+    FieldError:
+      type: object
+      description: Field-specific validation error
+      properties:
+        field:
+          type: string
+          description: Field name that failed validation
+          example: email
+        message:
+          type: string
+          description: Validation error message
+          example: must be a well-formed email address
+        rejectedValue:
+          description: The value that was rejected
+          example: invalid-email
+        expectedFormat:
+          type: string
+          description: Expected format or constraint
+          example: Valid email format (user@domain.com)
+    ValidationErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseApiResponse'
+        - type: object
+          description: Detailed error response with validation information
+          properties:
+            errorCode:
+              type: string
+              description: Error code for programmatic handling
+              example: VALIDATION_ERROR
+            fieldErrors:
+              type: array
+              description: List of specific field validation errors
+              items:
+                $ref: "#/components/schemas/FieldError"
+    ApiResponseMembershipRequestResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseApiResponse'
+        - type: object
+          description: API response wrapper for membership request operations
+          properties:
+            data:
+              $ref: "#/components/schemas/MembershipRequestResponse"
+              description: Response data containing membership request details
+    MembershipRequestResponse:
+      type: object
+      description: Membership request response with tracking information
+      properties:
+        requestId:
+          type: string
+          description: Unique request identifier for status tracking
+          example: req_abc123def456
+        project:
+          type: string
+          description: Project identifier
+          example: my-project
+        environment:
+          type: string
+          description: Environment
+          example: DEVELOPMENT
+        user:
+          type: string
+          description: Username
+          example: doejohn
+        account:
+          type: string
+          description: Account identifier
+          example: doejohn
+        role:
+          type: string
+          description: User's role in the project
+          example: TEAM
+        requestedAt:
+          type: string
+          format: date-time
+          description: When the membership request was triggered
+          example: 2023-10-01T12:34:56
+        status:
+          type: string
+          description: Current request status
+          enum:
+          - PENDING
+          - IN_PROGRESS
+          - COMPLETED
+          example: PENDING
+    ApiResponseMembershipRequestStatusResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseApiResponse'
+        - type: object
+          description: API response wrapper for membership request status operations
+          properties:
+            data:
+              $ref: "#/components/schemas/MembershipRequestStatusResponse"
+              description: Response data containing request status details
+    MembershipRequestStatusResponse:
+      type: object
+      description: Status information for a membership request
+      properties:
+        requestId:
+          type: string
+          description: Unique request identifier
+          example: req_abc123def456
+        status:
+          type: string
+          description: Current request status
+          enum:
+          - PENDING
+          - IN_PROGRESS
+          - COMPLETED
+          example: PENDING
+        completed:
+          type: boolean
+          description: Whether the request has completed processing
+          example: false
+        successful:
+          type: boolean
+          description: Whether the request completed successfully (only valid when
+            completed=true)
+          example: true
+        message:
+          type: string
+          description: Status message or description
+          example: Request is being processed
+        project:
+          type: string
+          description: Project identifier
+          example: my-project
+        user:
+          type: string
+          description: User identifier
+          example: john.doe
+        environment:
+          type: string
+          description: Environment
+          example: DEVELOPMENT
+        errorDetails:
+          type: string
+          description: Additional error details (if failed)
+          example: User already exists in project
+    Link:
+      type: object
+      properties:
+        href:
+          type: string
+        templated:
+          type: boolean
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuth: []

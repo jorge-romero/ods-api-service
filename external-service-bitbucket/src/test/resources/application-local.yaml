@@ -1,0 +1,32 @@
+# Test configuration for Bitbucket Integration Tests
+# This configuration is used when running integration tests with -Dspring.profiles.active=local
+
+logging:
+  level:
+    org.opendevstack.apiservice.externalservice.bitbucket: DEBUG
+
+# External Service Configuration for Bitbucket
+externalservice:
+  bitbucket:
+    instances:
+      # Development Bitbucket instance
+      dev:
+        base-url: ${BITBUCKET_DEV_BASE_REST_URL:https://bitbucket.dev.example.com}
+        bearer-token: ${BITBUCKET_DEV_BEARER_TOKEN:}
+        # OR use basic auth if bearer token is not available:
+        username: ${BITBUCKET_DEV_USERNAME:}
+        password: ${BITBUCKET_DEV_PASSWORD:}
+        connection-timeout: 30000
+        read-timeout: 30000
+        trust-all-certificates: ${BITBUCKET_DEV_TRUST_ALL:true}
+      
+      # Production Bitbucket instance
+      prod:
+        base-url: ${BITBUCKET_PROD_BASE_REST_URL:https://bitbucket.prod.example.com}
+        bearer-token: ${BITBUCKET_PROD_BEARER_TOKEN:}
+        # OR use basic auth:
+        username: ${BITBUCKET_PROD_USERNAME:}
+        password: ${BITBUCKET_PROD_PASSWORD:}
+        connection-timeout: 30000
+        read-timeout: 30000
+        trust-all-certificates: ${BITBUCKET_PROD_TRUST_ALL:false}

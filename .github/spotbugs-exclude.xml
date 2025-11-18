@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Exclude generated code from analysis -->
+    <Match>
+        <Source name="~.*[\\/]target[\\/]generated-sources[\\/].*" />
+    </Match>
+    <Match>
+        <Source name="~.*[\\/]target[\\/]generated-test-sources[\\/].*" />
+    </Match>
+
+    <!-- Exclude test resources -->
+    <Match>
+        <Source name="~.*[\\/]test[\\/]resources[\\/].*" />
+    </Match>
+
+    <!-- Example: Suppress specific bug patterns -->
+    <!-- Uncomment and modify as needed
+    <Match>
+        <Bug pattern="NP_NULL_ON_SOME_PATH" />
+    </Match>
+    -->
+
+    <!-- Example: Suppress for specific classes -->
+    <!-- 
+    <Match>
+        <Class name="com.example.SpecificClass" />
+        <Bug pattern="DM_STRING_CTOR" />
+    </Match>
+    -->
+</FindBugsFilter>

@@ -1,0 +1,15 @@
+logging:
+  level:
+    org.opendevstack.apiservice.externalservice.webhookproxy: DEBUG
+
+# Webhook Proxy Configuration for Integration Tests
+externalservice:
+  webhook-proxy:
+    clusters:
+      # Cluster A
+      cluster-a:
+        cluster-base: ${WEBHOOK_PROXY_CLUSTER_A_CLUSTER_BASE:apps.cluster-a.ocp.example.com}
+        connection-timeout: 30000
+        read-timeout: 60000
+        trust-all-certificates: ${WEBHOOK_PROXY_US_TEST_TRUST_ALL:true}
+        default-jenkinsfile-path: Jenkinsfile
