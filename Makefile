@@ -406,6 +406,7 @@ db-docker-run-db: db-docker-build-db
 	  -e POSTGRES_USER=ods_api_service \
 	  -e POSTGRES_PASSWORD=ods_api_service \
 	  -e POSTGRES_DB=ods_api_service \
+	  -d \
 	  $(PROJECT_NAME)-db:18
 
 
