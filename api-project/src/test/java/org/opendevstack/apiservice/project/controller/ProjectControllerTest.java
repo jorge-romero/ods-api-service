@@ -51,6 +51,9 @@ class ProjectControllerTest {
         assertThat(result.getBody()).isNotNull();
         assertThat(result.getBody().getProjectKey()).isEqualTo("PROJ01");
         assertThat(result.getBody().getStatus()).isEqualTo("Initiated");
+        assertThat(result.getBody().getError()).isNull();
+        assertThat(result.getBody().getErrorKey()).isNull();
+        assertThat(result.getBody().getErrorDescription()).isNull();
     }
 
     @Test
@@ -65,9 +68,12 @@ class ProjectControllerTest {
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(result.getBody()).isNotNull();
-        assertThat(result.getBody().getError()).isEqualTo("CONFLICT");
-        assertThat(result.getBody().getErrorKey()).isEqualTo("PROJECT_ALREADY_EXISTS");
-        assertThat(result.getBody().getMessage()).contains("already exists");
+        assertThat(result.getBody().getError()).isEqualTo("Project already exists");
+        assertThat(result.getBody().getErrorKey()).isEqualTo("025");
+        assertThat(result.getBody().getMessage()).contains("Project with key 'EXISTING' already exists");
+        assertThat(result.getBody().getProjectKey()).isNull();
+        assertThat(result.getBody().getStatus()).isNull();
+        assertThat(result.getBody().getErrorDescription()).isNull();
     }
 
     @Test
@@ -81,9 +87,12 @@ class ProjectControllerTest {
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(result.getBody()).isNotNull();
-        assertThat(result.getBody().getError()).isEqualTo("INTERNAL_ERROR");
+        assertThat(result.getBody().getError()).isEqualTo("Internal error");
         assertThat(result.getBody().getErrorKey()).isEqualTo("PROJECT_KEY_GENERATION_FAILED");
         assertThat(result.getBody().getMessage()).isEqualTo("Failed to generate a unique project key.");
+        assertThat(result.getBody().getProjectKey()).isNull();
+        assertThat(result.getBody().getStatus()).isNull();
+        assertThat(result.getBody().getErrorDescription()).isNull();
     }
 
     @Test
@@ -99,6 +108,8 @@ class ProjectControllerTest {
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody()).isNotNull();
         assertThat(result.getBody().getProjectKey()).isEqualTo("PROJ01");
+        assertThat(result.getBody().getError()).isNull();
+        assertThat(result.getBody().getErrorKey()).isNull();
         verify(projectsFacade).getProject("PROJ01");
     }
 
@@ -110,23 +121,29 @@ class ProjectControllerTest {
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(result.getBody()).isNotNull();
-        assertThat(result.getBody().getError()).isEqualTo("NOT_FOUND");
-        assertThat(result.getBody().getErrorKey()).isEqualTo("PROJECT_NOT_FOUND");
+        assertThat(result.getBody().getError()).isEqualTo("Not Found");
+        assertThat(result.getBody().getErrorKey()).isEqualTo("012");
         assertThat(result.getBody().getMessage()).contains("UNKNOWN");
+        assertThat(result.getBody().getProjectKey()).isNull();
+        assertThat(result.getBody().getStatus()).isNull();
+        assertThat(result.getBody().getErrorDescription()).isNull();
     }
 
     @Test
     void getProject_whenServiceThrows_thenReturnInternalServerError() throws Exception {
         when(projectsFacade.getProject(anyString()))
-                .thenThrow(new ProjectCreationException("Database error"));
+                .thenThrow(new RuntimeException("Database error"));
 
         ResponseEntity<CreateProjectResponse> result = sut.getProject("PROJ01");
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(result.getBody()).isNotNull();
-        assertThat(result.getBody().getError()).isEqualTo("INTERNAL_ERROR");
-        assertThat(result.getBody().getErrorKey()).isEqualTo("INTERNAL_ERROR");
+        assertThat(result.getBody().getError()).isEqualTo("Internal error");
+        assertThat(result.getBody().getErrorKey()).isEqualTo("003");
         assertThat(result.getBody().getMessage()).isEqualTo("An error occurred while processing the request.");
+        assertThat(result.getBody().getProjectKey()).isNull();
+        assertThat(result.getBody().getStatus()).isNull();
+        assertThat(result.getBody().getErrorDescription()).isNull();
     }
 
 }

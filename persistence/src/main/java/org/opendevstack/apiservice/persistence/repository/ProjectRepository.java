@@ -20,26 +20,11 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface ProjectRepository extends JpaRepository<ProjectEntity, UUID> {
-
-	/**
-	 * Finds a project by its unique business key regardless of soft-delete status. Use
-	 * this when you explicitly need to handle deleted projects (e.g. restore flows).
-	 * @param projectKey the Atlassian-style project key
-	 * @return the matching project, or {@link Optional#empty()} if it has never existed
-	 */
-	Optional<ProjectEntity> findByProjectKey(String projectKey);
-
-	/**
-	 * Returns all active (non-deleted) projects.
-	 * @return list of active projects; empty list if none exist
-	 */
+	
+	Optional<ProjectEntity> findByProjectKeyIgnoreCase(String projectKey);
+	
 	List<ProjectEntity> findByDeletedFalse();
-
-	/**
-	 * Checks whether an active project with the given key already exists.
-	 * @param projectKey the project key to look up
-	 * @return {@code true} if an active project with this key exists
-	 */
-	boolean existsByProjectKey(String projectKey);
+	
+	boolean existsByProjectKeyIgnoreCase(String projectKey);
 
 }

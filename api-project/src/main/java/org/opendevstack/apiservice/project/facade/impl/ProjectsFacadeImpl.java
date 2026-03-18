@@ -29,7 +29,7 @@ public class ProjectsFacadeImpl implements ProjectsFacade {
     }
 
     @Override
-    public CreateProjectResponse getProject(String projectKey) throws ProjectCreationException {
+    public CreateProjectResponse getProject(String projectKey) {
         return projectMapper.toApiResponse(projectService.getProject(projectKey));
     }
 }

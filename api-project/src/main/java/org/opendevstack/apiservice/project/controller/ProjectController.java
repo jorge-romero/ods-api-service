@@ -26,38 +26,51 @@ public class ProjectController implements ProjectsApi {
     
     public static final String API_BASE_PATH = "/api/pub/v0/projects";
 
+    private static final String HTTP_HEADER_LOCATION = "Location";
+
     private final ProjectsFacade projectsFacade;
     
     @PostMapping
     @Override
     public ResponseEntity<CreateProjectResponse> createProject(@Valid @RequestBody CreateProjectRequest createProjectRequest) {
         try {
-            return ResponseEntity.ok(projectsFacade.createProject(createProjectRequest));
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .header(HTTP_HEADER_LOCATION, API_BASE_PATH)
+                    .body(projectsFacade.createProject(createProjectRequest));
         } catch (ProjectCreationException e) {
             log.error("Project creation conflict: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(ProjectResponseFactory.conflict(e.getMessage()));
+                    .header(HTTP_HEADER_LOCATION, API_BASE_PATH)
+                    .body(ProjectResponseFactory.conflict(e.getMessage(), API_BASE_PATH));
         } catch (ProjectKeyGenerationException e) {
             log.error("Failed to generate project key: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ProjectResponseFactory.projectKeyGenerationFailed());
+                    .header(HTTP_HEADER_LOCATION, API_BASE_PATH)
+                    .body(ProjectResponseFactory.projectKeyGenerationFailed(API_BASE_PATH));
         }
     }
     
     @GetMapping("/{projectKey}")
     @Override
     public ResponseEntity<CreateProjectResponse> getProject(@PathVariable String projectKey) {
+        String location = API_BASE_PATH + "/" + projectKey;
         try {
             CreateProjectResponse response = projectsFacade.getProject(projectKey);
             if (response == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(ProjectResponseFactory.notFound(projectKey));
+                        .header(HTTP_HEADER_LOCATION, location)
+                        .body(ProjectResponseFactory.notFound(projectKey, location));
             }
-            return ResponseEntity.ok(response);
-        } catch (ProjectCreationException e) {
-            log.error("Error retrieving project '{}': {}", projectKey, e.getMessage(), e);
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .header(HTTP_HEADER_LOCATION, location)
+                    .body(response);
+        } catch (Exception e) {
+            log.error("Unexpected error retrieving project '{}': {}", projectKey, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ProjectResponseFactory.internalError());
+                    .header(HTTP_HEADER_LOCATION, location)
+                    .body(ProjectResponseFactory.internalError(location));
         }
     }
 }

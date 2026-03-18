@@ -10,5 +10,5 @@ public interface ProjectsFacade {
     CreateProjectResponse createProject(CreateProjectRequest request)
             throws ProjectCreationException, ProjectKeyGenerationException;
 
-    CreateProjectResponse getProject(String projectKey) throws ProjectCreationException;
+    CreateProjectResponse getProject(String projectKey);
 }

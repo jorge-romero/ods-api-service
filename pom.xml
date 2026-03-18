@@ -36,6 +36,7 @@
         <spring-javaformat-maven-plugin.version>0.0.47</spring-javaformat-maven-plugin.version>
         <jackson-databind-nullable.version>0.2.7</jackson-databind-nullable.version>
         <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
+        <mapstruct.version>1.6.3</mapstruct.version>
 
         <!-- Test execution -->
         <jacoco.agent.argLine>

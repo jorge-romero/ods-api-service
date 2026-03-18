@@ -78,7 +78,8 @@ public class ProjectEntity {
 	private String projectFlavor;
 
 	/**
-	 * Provisioning status. Known values: {@code Failed}, {@code Pending} (null = completed).
+	 * Provisioning status. Known values: {@code Pending}, {@code Running}, {@code Failed}
+	 * ({@code null} = completed successfully).
 	 */
 	@Column(name = "status", length = 50)
 	private String status;

@@ -41,6 +41,14 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- Spring Boot DevTools for fast restart during development -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+
         <!-- External Service API -->
         <dependency>
             <groupId>org.opendevstack.apiservice</groupId>
@@ -116,6 +124,13 @@
         <dependency>
             <groupId>org.opendevstack.apiservice</groupId>
             <artifactId>api-project-platform</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Service Projects module: project creation and key generation -->
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>service-projects</artifactId>
             <version>${project.version}</version>
         </dependency>
 

@@ -113,19 +113,17 @@ class ProjectRepositoryIntegrationTest {
     }
 
     private void cleanupTestData() {
-        TEST_KEYS.forEach(key -> projectRepository.findByProjectKey(key).ifPresent(projectRepository::delete));
+        TEST_KEYS.forEach(key -> projectRepository.findByProjectKeyIgnoreCase(key).ifPresent(projectRepository::delete));
     }
 
-    // ── findByProjectKey ──────────────────────────────────────────────────────
-
     @Nested
-    @DisplayName("findByProjectKey")
-    class FindByProjectKey {
+    @DisplayName("findByProjectKeyIgnoreCase")
+    class findByProjectKeyIgnoreCase {
 
         @Test
         @DisplayName("returns active project by its key")
         void returnsActiveProjectByKey() {
-            Optional<ProjectEntity> result = projectRepository.findByProjectKey("IT-ACTIVE-01");
+            Optional<ProjectEntity> result = projectRepository.findByProjectKeyIgnoreCase("IT-ACTIVE-01");
 
             assertThat(result).isPresent();
             assertThat(result.get().getProjectKey()).isEqualTo("IT-ACTIVE-01");
@@ -135,7 +133,7 @@ class ProjectRepositoryIntegrationTest {
         @Test
         @DisplayName("returns soft-deleted project by its key")
         void returnsDeletedProjectByKey() {
-            Optional<ProjectEntity> result = projectRepository.findByProjectKey("IT-DELETED-01");
+            Optional<ProjectEntity> result = projectRepository.findByProjectKeyIgnoreCase("IT-DELETED-01");
 
             assertThat(result).isPresent();
             assertThat(result.get().getProjectKey()).isEqualTo("IT-DELETED-01");
@@ -145,7 +143,7 @@ class ProjectRepositoryIntegrationTest {
         @Test
         @DisplayName("returns empty Optional for a key that has never existed")
         void returnsEmptyForUnknownKey() {
-            Optional<ProjectEntity> result = projectRepository.findByProjectKey("NONEXISTENTKEY");
+            Optional<ProjectEntity> result = projectRepository.findByProjectKeyIgnoreCase("NONEXISTENTKEY");
 
             assertThat(result).isEmpty();
         }
@@ -153,7 +151,7 @@ class ProjectRepositoryIntegrationTest {
         @Test
         @DisplayName("returned entity contains all persisted fields")
         void returnedEntityContainsAllFields() {
-            Optional<ProjectEntity> result = projectRepository.findByProjectKey("IT-DELETED-01");
+            Optional<ProjectEntity> result = projectRepository.findByProjectKeyIgnoreCase("IT-DELETED-01");
 
             assertThat(result).isPresent();
             ProjectEntity entity = result.get();
@@ -163,8 +161,6 @@ class ProjectRepositoryIntegrationTest {
             assertThat(entity.getStatus()).isEqualTo("Failed");
         }
     }
-
-    // ── findByDeletedFalse ────────────────────────────────────────────────────
 
     @Nested
     @DisplayName("findByDeletedFalse")
@@ -212,24 +208,22 @@ class ProjectRepositoryIntegrationTest {
         @Test
         @DisplayName("returns true for an existing active project key")
         void returnsTrueForActiveKey() {
-            assertThat(projectRepository.existsByProjectKey("IT-ACTIVE-01")).isTrue();
+            assertThat(projectRepository.existsByProjectKeyIgnoreCase("IT-ACTIVE-01")).isTrue();
         }
 
         @Test
         @DisplayName("returns true for a soft-deleted project key")
         void returnsTrueForDeletedKey() {
-            assertThat(projectRepository.existsByProjectKey("IT-DELETED-01")).isTrue();
+            assertThat(projectRepository.existsByProjectKeyIgnoreCase("IT-DELETED-01")).isTrue();
         }
 
         @Test
         @DisplayName("returns false for a key that has never existed")
         void returnsFalseForNonExistentKey() {
-            assertThat(projectRepository.existsByProjectKey("NONEXISTENTKEY")).isFalse();
+            assertThat(projectRepository.existsByProjectKeyIgnoreCase("NONEXISTENTKEY")).isFalse();
         }
     }
-
-    // ── Persistence lifecycle ─────────────────────────────────────────────────
-
+    
     @Nested
     @DisplayName("Persistence lifecycle")
     class PersistenceLifecycle {

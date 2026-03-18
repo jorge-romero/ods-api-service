@@ -1,0 +1,29 @@
+package org.opendevstack.apiservice.serviceproject.mapper;
+
+import java.util.Arrays;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+import org.opendevstack.apiservice.persistence.entity.ProjectEntity;
+import org.opendevstack.apiservice.serviceproject.model.ProjectResponse;
+import org.opendevstack.apiservice.serviceproject.model.Status;
+
+@Mapper(componentModel = "spring")
+public interface ProjectResponseMapper {
+
+    @Mapping(source = "status", target = "status", qualifiedByName = "mapStatus")
+    ProjectResponse toCreateProjectResponse(ProjectEntity entity);
+
+    @Named("mapStatus")
+    default Status mapStatus(String value) {
+        if (value == null) {
+            return null;
+        }
+        
+        return Arrays.stream(Status.values())
+                .filter(s -> s.getDbValue().equalsIgnoreCase(value))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Unknown Status db value: '" + value + "'"));
+    }
+}
