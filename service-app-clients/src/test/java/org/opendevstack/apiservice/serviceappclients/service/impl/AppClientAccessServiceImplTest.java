@@ -40,7 +40,6 @@ class AppClientAccessServiceImplTest {
 
         assertThat(result).isPresent();
         assertThat(result.get().clientName()).isEqualTo("Portal App");
-        assertThat(result.get().permissions()).containsExactly("project:add", "project:list");
         assertThat(result.get().projectFlavors()).hasSize(2);
         assertThat(result.get().projectFlavors())
             .extracting(flavor -> flavor.name())
@@ -127,8 +126,6 @@ class AppClientAccessServiceImplTest {
         ClientAppEntity clientApp = ClientAppEntity.builder()
             .clientId(CLIENT_ID)
             .clientName("Portal App")
-            .permissions(new String[] { "project:add", "project:list" })
-            .roleScope("api.write")
             .enabled(enabled)
             .projectFlavors(new LinkedHashSet<>())
             .build();

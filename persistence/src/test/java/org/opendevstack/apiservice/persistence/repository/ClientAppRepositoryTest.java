@@ -64,8 +64,6 @@ class ClientAppRepositoryTest {
 		ClientAppEntity clientApp = ClientAppEntity.builder()
 			.clientId(clientId)
 			.clientName(enabled ? "Enabled app" : "Disabled app")
-			.permissions(new String[] { "project:add", "project:list" })
-			.roleScope(enabled ? "api.write" : "api.read")
 			.enabled(enabled)
 			.build();
 
@@ -102,7 +100,7 @@ class ClientAppRepositoryTest {
 		void save_duplicateClientId_throwsException() {
 			ClientAppEntity duplicate = ClientAppEntity.builder()
 				.clientId("11111111-1111-1111-1111-111111111111")
-				.permissions(new String[] { "project:detail" })
+				.enabled(true)
 				.build();
 
 			assertThatThrownBy(() -> repository.saveAndFlush(duplicate))

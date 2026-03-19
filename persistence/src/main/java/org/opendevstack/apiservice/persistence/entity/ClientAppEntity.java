@@ -20,8 +20,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 /**
  * JPA entity mapping the {@code client_apps} table.
@@ -33,7 +31,7 @@ import org.hibernate.type.SqlTypes;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = "projectFlavors")
+@ToString(exclude = {"projectFlavors", "appRoles"})
 public class ClientAppEntity {
 
 	@Id
@@ -49,16 +47,6 @@ public class ClientAppEntity {
 	@Column(name = "client_name", length = 255)
 	private String clientName;
 
-	/** Permissions granted to this client. */
-	@JdbcTypeCode(SqlTypes.ARRAY)
-	@Column(name = "permissions", nullable = false, columnDefinition = "TEXT[]")
-	@Builder.Default
-	private String[] permissions = new String[0];
-
-	/** OAuth2 scope or role associated with the client. */
-	@Column(name = "role_scope", columnDefinition = "TEXT")
-	private String roleScope;
-
 	/** Whether the client is allowed to call the API. */
 	@Column(name = "enabled", nullable = false)
 	@Builder.Default
@@ -68,6 +56,11 @@ public class ClientAppEntity {
 	@OneToMany(mappedBy = "clientApp", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
 	private Set<ClientAppProjectFlavorEntity> projectFlavors = new LinkedHashSet<>();
+
+	/** Roles assigned to this client application. */
+	@OneToMany(mappedBy = "clientApp", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Builder.Default
+	private Set<ClientAppRoleEntity> appRoles = new LinkedHashSet<>();
 
 	/** Original creation timestamp (UTC). Set automatically on first persist. */
 	@Column(name = "created_at", nullable = false, updatable = false,

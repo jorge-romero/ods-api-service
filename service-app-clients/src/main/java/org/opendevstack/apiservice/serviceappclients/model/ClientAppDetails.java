@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * Service-layer view of a registered API client application.
  */
-public record ClientAppDetails(String clientId, String clientName, List<String> permissions,
-        String roleScope, boolean enabled, List<ClientAppFlavorDetails> projectFlavors) {
+public record ClientAppDetails(String clientId, String clientName, boolean enabled,
+        List<ClientAppFlavorDetails> projectFlavors) {
 
 }

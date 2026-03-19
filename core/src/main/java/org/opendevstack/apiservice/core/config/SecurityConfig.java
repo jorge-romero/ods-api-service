@@ -5,12 +5,20 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 @Configuration
@@ -88,13 +96,13 @@ public class SecurityConfig {
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter authenticationConverter = new JwtAuthenticationConverter();
-        authenticationConverter.setJwtGrantedAuthoritiesConverter(new CustomRoleConverter());
+        authenticationConverter.setJwtGrantedAuthoritiesConverter(new EntraIdRoleConverter());
         return authenticationConverter;
     }
 
     @Bean
-    public CustomRoleConverter customRoleConverter() {
-        return new CustomRoleConverter();
+    public EntraIdRoleConverter customRoleConverter() {
+        return new EntraIdRoleConverter();
     }
 
     @Bean
@@ -165,13 +173,45 @@ public class SecurityConfig {
     }
 
     private JwtDecoder createValidatingJwtDecoder() {
+        String audience = securityProperties.getAudience();
         if (securityProperties.getJwkSetUri() != null && !securityProperties.getJwkSetUri().isEmpty()) {
-            return NimbusJwtDecoder.withJwkSetUri(securityProperties.getJwkSetUri()).build();
+            NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(securityProperties.getJwkSetUri()).build();
+            decoder.setJwtValidator(buildJwtValidator(audience));
+            return decoder;
         }
         
         throw new IllegalStateException(
             "JWT validation is enabled but no JWK Set URI is configured. " +
             "Please set app.security.jwk-set-uri in your configuration."
         );
+    }
+
+    private OAuth2TokenValidator<Jwt> buildJwtValidator(String audience) {
+        List<OAuth2TokenValidator<Jwt>> validators = new ArrayList<>();
+
+        String issuer = securityProperties.getIssuer();
+        if (issuer != null && !issuer.isBlank()) {
+            validators.add(JwtValidators.createDefaultWithIssuer(issuer));
+        } else {
+            validators.add(JwtValidators.createDefault());
+        }
+
+        if (audience != null && !audience.isBlank()) {
+            validators.add(jwt -> {
+                List<String> audiences = jwt.getAudience();
+                if (audiences != null && audiences.contains(audience)) {
+                    return OAuth2TokenValidatorResult.success();
+                }
+                return OAuth2TokenValidatorResult.failure(
+                    new OAuth2Error(
+                        "invalid_token",
+                        "Invalid audience. Expected " + audience,
+                        null
+                    )
+                );
+            });
+        }
+
+        return new DelegatingOAuth2TokenValidator<>(validators);
     }
 }

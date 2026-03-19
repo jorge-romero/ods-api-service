@@ -51,7 +51,7 @@ public class AppClientAccessServiceImpl implements AppClientAccessService {
 
     private ClientAppDetails mapToDetails(ClientAppEntity clientApp) {
         return new ClientAppDetails(clientApp.getClientId(), clientApp.getClientName(),
-                toList(clientApp.getPermissions()), clientApp.getRoleScope(), clientApp.isEnabled(),
+                clientApp.isEnabled(),
                 clientApp.getProjectFlavors().stream()
                     .map(this::mapFlavorToDetails)
                     .sorted((left, right) -> left.name().compareToIgnoreCase(right.name()))

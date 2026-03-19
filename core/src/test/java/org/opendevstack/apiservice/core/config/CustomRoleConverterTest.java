@@ -12,25 +12,19 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CustomRoleConverterTest {
 
-    private CustomRoleConverter converter;
+    private EntraIdRoleConverter converter;
 
     @BeforeEach
     void setUp() {
-        converter = new CustomRoleConverter();
+        converter = new EntraIdRoleConverter();
     }
 
     @Test
-    void testConvertWithRealmRoles() {
-        // Given
-        Map<String, Object> realmAccess = new HashMap<>();
-        realmAccess.put("roles", Arrays.asList("admin", "user"));
+    void testConvertWithEntraRoles() {
+        Jwt jwt = createJwtWithClaims(Map.of("roles", List.of("admin", "user")));
 
-        Jwt jwt = createJwtWithClaims(Map.of("realm_access", realmAccess));
-
-        // When
         Collection<GrantedAuthority> authorities = converter.convert(jwt);
 
-        // Then
         assertNotNull(authorities);
         assertEquals(2, authorities.size());
         assertTrue(containsAuthority(authorities, "ROLE_admin"));
@@ -38,211 +32,145 @@ class CustomRoleConverterTest {
     }
 
     @Test
-    void testConvertWithResourceRoles() {
-        // Given
-        Map<String, Object> clientRoles = new HashMap<>();
-        clientRoles.put("roles", Arrays.asList("manager", "viewer"));
+    void testConvertWithEntraScopes() {
+        Jwt jwt = createJwtWithClaims(Map.of("scp", "read write"));
 
-        Map<String, Object> resourceAccess = new HashMap<>();
-        resourceAccess.put("my-client", clientRoles);
-
-        Jwt jwt = createJwtWithClaims(Map.of("resource_access", resourceAccess));
-
-        // When
         Collection<GrantedAuthority> authorities = converter.convert(jwt);
 
-        // Then
         assertNotNull(authorities);
         assertEquals(2, authorities.size());
-        assertTrue(containsAuthority(authorities, "ROLE_manager"));
-        assertTrue(containsAuthority(authorities, "ROLE_viewer"));
+        assertTrue(containsAuthority(authorities, "SCOPE_read"));
+        assertTrue(containsAuthority(authorities, "SCOPE_write"));
     }
 
     @Test
-    void testConvertWithBothRealmAndResourceRoles() {
-        // Given
-        Map<String, Object> realmAccess = new HashMap<>();
-        realmAccess.put("roles", Arrays.asList("admin"));
+    void testConvertWithRolesAndScopes() {
+        Jwt jwt = createJwtWithClaims(Map.of(
+                "roles", List.of("admin"),
+                "scp", "read write"
+        ));
 
-        Map<String, Object> clientRoles = new HashMap<>();
-        clientRoles.put("roles", Arrays.asList("manager"));
-
-        Map<String, Object> resourceAccess = new HashMap<>();
-        resourceAccess.put("my-client", clientRoles);
-
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("realm_access", realmAccess);
-        claims.put("resource_access", resourceAccess);
-
-        Jwt jwt = createJwtWithClaims(claims);
-
-        // When
         Collection<GrantedAuthority> authorities = converter.convert(jwt);
 
-        // Then
-        assertNotNull(authorities);
-        assertEquals(2, authorities.size());
-        assertTrue(containsAuthority(authorities, "ROLE_admin"));
-        assertTrue(containsAuthority(authorities, "ROLE_manager"));
-    }
-
-    @Test
-    void testConvertWithMultipleResourceClients() {
-        // Given
-        Map<String, Object> client1Roles = new HashMap<>();
-        client1Roles.put("roles", Arrays.asList("role1", "role2"));
-
-        Map<String, Object> client2Roles = new HashMap<>();
-        client2Roles.put("roles", Arrays.asList("role3"));
-
-        Map<String, Object> resourceAccess = new HashMap<>();
-        resourceAccess.put("client1", client1Roles);
-        resourceAccess.put("client2", client2Roles);
-
-        Jwt jwt = createJwtWithClaims(Map.of("resource_access", resourceAccess));
-
-        // When
-        Collection<GrantedAuthority> authorities = converter.convert(jwt);
-
-        // Then
         assertNotNull(authorities);
         assertEquals(3, authorities.size());
-        assertTrue(containsAuthority(authorities, "ROLE_role1"));
-        assertTrue(containsAuthority(authorities, "ROLE_role2"));
-        assertTrue(containsAuthority(authorities, "ROLE_role3"));
-    }
-
-    @Test
-    void testConvertWithNullRealmAccess() {
-        // Given
-        Jwt jwt = createJwtWithClaims(Map.of());
-
-        // When
-        Collection<GrantedAuthority> authorities = converter.convert(jwt);
-
-        // Then
-        assertNotNull(authorities);
-        assertTrue(authorities.isEmpty());
-    }
-
-    @Test
-    void testConvertWithEmptyRealmRoles() {
-        // Given
-        Map<String, Object> realmAccess = new HashMap<>();
-        realmAccess.put("roles", Collections.emptyList());
-
-        Jwt jwt = createJwtWithClaims(Map.of("realm_access", realmAccess));
-
-        // When
-        Collection<GrantedAuthority> authorities = converter.convert(jwt);
-
-        // Then
-        assertNotNull(authorities);
-        assertTrue(authorities.isEmpty());
-    }
-
-    @Test
-    void testConvertWithNullResourceAccess() {
-        // Given
-        Map<String, Object> realmAccess = new HashMap<>();
-        realmAccess.put("roles", Arrays.asList("admin"));
-
-        Jwt jwt = createJwtWithClaims(Map.of("realm_access", realmAccess));
-
-        // When
-        Collection<GrantedAuthority> authorities = converter.convert(jwt);
-
-        // Then
-        assertNotNull(authorities);
-        assertEquals(1, authorities.size());
         assertTrue(containsAuthority(authorities, "ROLE_admin"));
+        assertTrue(containsAuthority(authorities, "SCOPE_read"));
+        assertTrue(containsAuthority(authorities, "SCOPE_write"));
     }
 
     @Test
-    void testConvertWithRealmAccessWithoutRoles() {
-        // Given
-        Map<String, Object> realmAccess = new HashMap<>();
-        // No "roles" key
+    void testConvertWithNullJwt() {
+        Collection<GrantedAuthority> authorities = converter.convert(null);
 
-        Jwt jwt = createJwtWithClaims(Map.of("realm_access", realmAccess));
-
-        // When
-        Collection<GrantedAuthority> authorities = converter.convert(jwt);
-
-        // Then
         assertNotNull(authorities);
         assertTrue(authorities.isEmpty());
     }
 
     @Test
-    void testConvertWithMalformedResourceAccess() {
-        // Given - resource_access without proper structure
-        Map<String, Object> resourceAccess = new HashMap<>();
-        resourceAccess.put("client1", "not-a-map"); // Should be a Map
+    void testConvertWithNoRoleOrScopeClaims() {
+        Jwt jwt = createJwtWithClaims(Map.of("sub", "test-user"));
 
-        Jwt jwt = createJwtWithClaims(Map.of("resource_access", resourceAccess));
-
-        // When
         Collection<GrantedAuthority> authorities = converter.convert(jwt);
 
-        // Then
         assertNotNull(authorities);
         assertTrue(authorities.isEmpty());
     }
 
     @Test
-    void testConvertWithResourceAccessClientWithoutRoles() {
-        // Given
-        Map<String, Object> clientConfig = new HashMap<>();
-        clientConfig.put("other-field", "value");
-        // No "roles" key
+    void testConvertWithEmptyRolesAndBlankScopes() {
+        Jwt jwt = createJwtWithClaims(Map.of(
+                "roles", Collections.emptyList(),
+                "scp", "   "
+        ));
 
-        Map<String, Object> resourceAccess = new HashMap<>();
-        resourceAccess.put("my-client", clientConfig);
-
-        Jwt jwt = createJwtWithClaims(Map.of("resource_access", resourceAccess));
-
-        // When
         Collection<GrantedAuthority> authorities = converter.convert(jwt);
 
-        // Then
-        assertNotNull(authorities);
-        assertTrue(authorities.isEmpty());
-    }
-
-    @Test
-    void testConvertWithNullRolesInRealmAccess() {
-        // Given
-        Map<String, Object> realmAccess = new HashMap<>();
-        realmAccess.put("roles", null);
-
-        Jwt jwt = createJwtWithClaims(Map.of("realm_access", realmAccess));
-
-        // When
-        Collection<GrantedAuthority> authorities = converter.convert(jwt);
-
-        // Then
         assertNotNull(authorities);
         assertTrue(authorities.isEmpty());
     }
 
     @Test
     void testRolePrefixIsAdded() {
-        // Given
-        Map<String, Object> realmAccess = new HashMap<>();
-        realmAccess.put("roles", Arrays.asList("test-role"));
+        Jwt jwt = createJwtWithClaims(Map.of("roles", List.of("test-role")));
 
-        Jwt jwt = createJwtWithClaims(Map.of("realm_access", realmAccess));
-
-        // When
         Collection<GrantedAuthority> authorities = converter.convert(jwt);
 
-        // Then
         assertNotNull(authorities);
         assertEquals(1, authorities.size());
         GrantedAuthority authority = authorities.iterator().next();
         assertTrue(authority.getAuthority().startsWith("ROLE_"));
         assertEquals("ROLE_test-role", authority.getAuthority());
+    }
+
+    @Test
+    void testScopePrefixIsAdded() {
+        Jwt jwt = createJwtWithClaims(Map.of("scp", "custom-scope"));
+
+        Collection<GrantedAuthority> authorities = converter.convert(jwt);
+
+        assertNotNull(authorities);
+        assertEquals(1, authorities.size());
+        GrantedAuthority authority = authorities.iterator().next();
+        assertTrue(authority.getAuthority().startsWith("SCOPE_"));
+        assertEquals("SCOPE_custom-scope", authority.getAuthority());
+    }
+
+    @Test
+    void testConvertIgnoresNonStringRolesEntries() {
+        Jwt jwt = createJwtWithClaims(Map.of("roles", Arrays.asList("admin", 123, "user", null)));
+
+        Collection<GrantedAuthority> authorities = converter.convert(jwt);
+
+        assertNotNull(authorities);
+        assertEquals(2, authorities.size());
+        assertTrue(containsAuthority(authorities, "ROLE_admin"));
+        assertTrue(containsAuthority(authorities, "ROLE_user"));
+    }
+
+    @Test
+    void testConvertIgnoresBlankRoleValues() {
+        Jwt jwt = createJwtWithClaims(Map.of("roles", List.of("admin", " ", "user")));
+
+        Collection<GrantedAuthority> authorities = converter.convert(jwt);
+
+        assertNotNull(authorities);
+        assertEquals(2, authorities.size());
+        assertTrue(containsAuthority(authorities, "ROLE_admin"));
+        assertTrue(containsAuthority(authorities, "ROLE_user"));
+    }
+
+    @Test
+    void testConvertIgnoresExtraSpacesInScopes() {
+        Jwt jwt = createJwtWithClaims(Map.of("scp", "read   write  "));
+
+        Collection<GrantedAuthority> authorities = converter.convert(jwt);
+
+        assertNotNull(authorities);
+        assertEquals(2, authorities.size());
+        assertTrue(containsAuthority(authorities, "SCOPE_read"));
+        assertTrue(containsAuthority(authorities, "SCOPE_write"));
+    }
+
+    @Test
+    void testConvertIgnoresKeycloakClaims() {
+        Map<String, Object> realmAccess = new HashMap<>();
+        realmAccess.put("roles", List.of("legacy-admin"));
+
+        Map<String, Object> clientRoles = new HashMap<>();
+        clientRoles.put("roles", List.of("legacy-manager"));
+        Map<String, Object> resourceAccess = new HashMap<>();
+        resourceAccess.put("my-client", clientRoles);
+
+        Jwt jwt = createJwtWithClaims(Map.of(
+                "realm_access", realmAccess,
+                "resource_access", resourceAccess
+        ));
+
+        Collection<GrantedAuthority> authorities = converter.convert(jwt);
+
+        assertNotNull(authorities);
+        assertTrue(authorities.isEmpty());
     }
 
     // Helper methods
