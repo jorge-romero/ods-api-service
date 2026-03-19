@@ -306,6 +306,10 @@ DB_JDBC_URL       = jdbc:postgresql://$(ODS_API_SERVICE_DB_HOST):$(DB_PORT)/$(OD
 DB_K8S_SERVICE    ?= ods-api-service-postgresql
 DB_PF_LOCAL_PORT  ?= 5432
 DB_PF_REMOTE_PORT ?= 5432
+# Named Docker volume used to persist local PostgreSQL data
+DB_DOCKER_VOLUME  ?= $(PROJECT_NAME)-db-data
+# Fixed Docker container name used for local PostgreSQL
+DB_DOCKER_CONTAINER ?= $(PROJECT_NAME)-db
 
 DB_MAVEN_ARGS  = -pl persistence \
                  -Dliquibase.url=$(DB_JDBC_URL) \
@@ -401,13 +405,21 @@ db-docker-run-db: db-docker-build-db
 	@echo "$(BLUE)Running PostgreSQL database in Docker...$(NC)"
 	@echo "$(YELLOW)Access the database at: localhost:5432$(NC)"
 	@echo "$(YELLOW)PostgreSQL credentials: user=ods_api_service, db=ods_api_service$(NC)"
-	@echo "$(YELLOW)Press Ctrl+C to stop$(NC)"	 
-	docker run -p 5432:5432 \
-	  -e POSTGRES_USER=ods_api_service \
-	  -e POSTGRES_PASSWORD=ods_api_service \
-	  -e POSTGRES_DB=ods_api_service \
-	  -d \
-	  $(PROJECT_NAME)-db:18
+	@echo "$(YELLOW)Using Docker container: $(DB_DOCKER_CONTAINER)$(NC)"
+	@echo "$(YELLOW)Persisting data in Docker volume: $(DB_DOCKER_VOLUME)$(NC)"
+	@if docker ps -a --format '{{.Names}}' | grep -Fxq "$(DB_DOCKER_CONTAINER)"; then \
+	  echo "$(GREEN)Starting existing container: $(DB_DOCKER_CONTAINER)$(NC)"; \
+	  docker start $(DB_DOCKER_CONTAINER); \
+	else \
+	  echo "$(GREEN)Creating container: $(DB_DOCKER_CONTAINER)$(NC)"; \
+	  docker run --name $(DB_DOCKER_CONTAINER) -p 5432:5432 \
+	    -e POSTGRES_USER=ods_api_service \
+	    -e POSTGRES_PASSWORD=ods_api_service \
+	    -e POSTGRES_DB=ods_api_service \
+	    -v $(DB_DOCKER_VOLUME):/var/lib/postgresql/data \
+	    -d \
+	    $(PROJECT_NAME)-db:18; \
+	fi
 
 
 ## Clean everything including Docker images

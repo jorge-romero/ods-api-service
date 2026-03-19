@@ -33,8 +33,6 @@ spring:
       ddl-auto: validate
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        # Log slow queries (> 500 ms) via Hibernate statistics
         generate_statistics: false
     # Avoid lazy-loading pitfalls: keep Session scoped to Service, not Request
     open-in-view: false
