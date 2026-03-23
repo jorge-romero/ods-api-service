@@ -1,0 +1,166 @@
+openapi: 3.0.3
+info:
+  title: ODS API Server
+  description: API documentation for ODS (Open DevStack) API Service
+  contact:
+    name: ODS Team
+  version: v0.0.1
+servers:
+  - url: http://{baseurl}/api/pub/v0
+    variables:
+      baseurl:
+        default: localhost:8080
+        description: Development environment
+tags:
+  - name: ProjectComponents
+    description: API for managing project components
+
+paths:
+  /projects/{projectId}/components/:
+    post:
+      tags:
+        - projectComponents
+      summary: Create a component in a project
+      operationId: createProjectComponent
+      description: Retrieves information about a specific component
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project id
+          schema:
+            type: string
+      requestBody:
+        description: Component data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateComponentRequest'
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateComponentResponse'
+        '400':
+          description: Bad Request
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden
+        '404':
+          description: Endpoint not found / Project not found / Product not found
+        '500':
+          description: Internal Server Error
+
+  /projects/{projectId}/components/{componentId}:
+    get:
+      tags:
+        - projectComponents
+      summary: Get component information
+      operationId: getProjectComponent
+      description: Retrieves information about a specific component
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project id
+          schema:
+            type: string
+        - name: componentId
+          in: path
+          required: true
+          description: Component id
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Component information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Component'
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    UnauthorizedError:
+      description: Authentication information is missing or invalid
+      headers:
+        WWW_Authenticate:
+          schema:
+            type: string
+  schemas:
+    Component:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Component ID
+        name:
+          type: string
+          description: Name of the component
+        productDescription:
+          type: string
+          description: Description of the product
+        productName:
+          type: string
+          description: Name of the product (e.g. Docker plain)
+        productId:
+          type: string
+          description: Product ID
+        environment:
+          type: string
+          description: Environment (e.g. DEV)
+        status:
+          type: string
+          description: Status of the component (e.g. READY, NOT_READY)
+        resultTraceback:
+          type: string
+          description: Traceback information in case of error
+        repositoryURL:
+          type: string
+          description: URL of the repository (for ODS products)
+        params:
+          type: object
+          description: Additional parameters (key-value pairs)
+        component-type:
+          type: string
+          description: Type of component (ods|awx)
+    CreateComponentResponse:
+      type: object
+      properties:
+        errorCode:
+          type: integer
+        field:
+          type: string
+        message:
+          type: string
+        location:
+          type: string
+          format: url
+    CreateComponentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: component name
+        productId:
+          type: string
+          description: product id
+        params:
+          type: object
+          additionalProperties:
+            type: string

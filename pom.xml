@@ -58,6 +58,7 @@
         <module>api-project-users</module>
         <module>api-project-platform</module>
         <module>api-project</module>
+        <module>api-project-component-v0</module>
     </modules>
 
     <dependencyManagement>

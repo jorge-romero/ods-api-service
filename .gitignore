@@ -95,5 +95,7 @@ api-project-platform/src/main/java/org/opendevstack/apiservice/projectplatform/a
 api-project-platform/src/main/java/org/opendevstack/apiservice/projectplatform/model
 api-project/src/main/java/org/opendevstack/apiservice/project/api
 api-project/src/main/java/org/opendevstack/apiservice/project/model
+api-project-component-v0/src/main/java/org/opendevstack/apiservice/project/api
+api-project-component-v0/src/main/java/org/opendevstack/apiservice/project/model
 **/.openapi-generator
 
