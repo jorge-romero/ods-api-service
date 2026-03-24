@@ -51,8 +51,12 @@ public class PolicyAuthorizationManager implements AuthorizationManager<RequestA
 
         ApiDefinition apiDef = (ApiDefinition) request.getAttribute(AuthTypeEnforcementFilter.API_DEFINITION_ATTR);
 
-        // No API definition resolved or API is public: allow
-        if (apiDef == null || apiDef.isPublic()) {
+        // Unknown routes are denied (fail-closed). Public API definitions are allowed.
+        if (apiDef == null) {
+            return new org.springframework.security.authorization.AuthorizationDecision(false);
+        }
+
+        if (apiDef.isPublic()) {
             return new org.springframework.security.authorization.AuthorizationDecision(true);
         }
 
