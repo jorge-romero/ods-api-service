@@ -4,8 +4,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -13,9 +11,11 @@ import java.io.IOException;
 /**
  * Eagerly reads and caches the request body so it can be consumed multiple times
  * (policy evaluators + downstream controllers).
+ *
+ * <p>Registered explicitly in the {@code SecurityFilterChain} by
+ * {@link org.opendevstack.apiservice.core.config.SecurityConfig} —
+ * do <b>not</b> annotate with {@code @Component}.
  */
-@Component
-@Order(1)
 public class RequestBodyCachingFilter extends OncePerRequestFilter {
 
     @Override

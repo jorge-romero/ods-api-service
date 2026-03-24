@@ -2,6 +2,7 @@ package org.opendevstack.apiservice.core.config;
 
 import org.opendevstack.apiservice.core.engine.authorization.PolicyAuthorizationManager;
 import org.opendevstack.apiservice.core.engine.filter.ApiRegistryFilter;
+import org.opendevstack.apiservice.core.engine.filter.RequestBodyCachingFilter;
 import org.opendevstack.apiservice.core.security.filter.AuthTypeEnforcementFilter;
 import org.opendevstack.apiservice.core.security.jwt.AzureJwtAuthenticationConverter;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,6 +55,11 @@ public class SecurityConfig {
     }
 
     @Bean
+    public RequestBodyCachingFilter requestBodyCachingFilter() {
+        return new RequestBodyCachingFilter();
+    }
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
@@ -62,6 +68,7 @@ public class SecurityConfig {
                         .jwt(jwt -> jwt
                                 .jwkSetUri(jwkSetUri)
                                 .jwtAuthenticationConverter(jwtConverter)))
+                .addFilterBefore(requestBodyCachingFilter(), BearerTokenAuthenticationFilter.class)
                 .addFilterBefore(apiRegistryFilter, BearerTokenAuthenticationFilter.class)
                 .addFilterAfter(authTypeEnforcementFilter, BearerTokenAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> {

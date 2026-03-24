@@ -16,25 +16,25 @@ public class PolicyContext {
     private final Map<String, Object> claims;
     private final ApiDefinition apiDefinition;
     private final HttpServletRequest request;
-    private PolicyRule activeRule;
-    private Map<String, Object> requestBody;
+    private final PolicyRule activeRule;
+    private final Map<String, Object> requestBody;
 
     public PolicyContext(String clientId, String subject, Map<String, Object> claims,
                          ApiDefinition apiDefinition, HttpServletRequest request) {
-        this.clientId = clientId;
-        this.subject = subject;
-        this.claims = claims;
-        this.apiDefinition = apiDefinition;
-        this.request = request;
+        this(clientId, subject, claims, apiDefinition, request, null, null);
     }
 
+    /**
+     * Returns a new context with the given rule set, leaving this instance unchanged.
+     */
     public PolicyContext withRule(PolicyRule rule) {
-        this.activeRule = rule;
-        return this;
+        return new PolicyContext(clientId, subject, claims, apiDefinition, request, rule, requestBody);
     }
 
+    /**
+     * Returns a new context with the given request body, leaving this instance unchanged.
+     */
     public PolicyContext withRequestBody(Map<String, Object> body) {
-        this.requestBody = body;
-        return this;
+        return new PolicyContext(clientId, subject, claims, apiDefinition, request, activeRule, body);
     }
 }

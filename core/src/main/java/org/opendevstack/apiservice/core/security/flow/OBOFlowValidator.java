@@ -1,5 +1,6 @@
 package org.opendevstack.apiservice.core.security.flow;
 
+import org.opendevstack.apiservice.core.contracts.auth.AuthType;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
@@ -7,8 +8,8 @@ import org.springframework.stereotype.Component;
 public class OBOFlowValidator implements AuthFlowValidator {
 
     @Override
-    public AuthFlowType getSupportedFlow() {
-        return AuthFlowType.OBO;
+    public AuthType getSupportedFlow() {
+        return AuthType.OBO;
     }
 
     @Override

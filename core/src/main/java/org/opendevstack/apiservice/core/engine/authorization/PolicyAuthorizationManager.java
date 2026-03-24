@@ -62,7 +62,7 @@ public class PolicyAuthorizationManager implements AuthorizationManager<RequestA
         if (request instanceof CachedBodyHttpServletRequest cached && cached.getBody().length > 0) {
             try {
                 Map<String, Object> body = objectMapper.readValue(cached.getBody(), new TypeReference<>() {});
-                policyContext.withRequestBody(body);
+                policyContext = policyContext.withRequestBody(body);
             } catch (Exception ignored) {
                 // body is not JSON (GET, form-data, etc.) — safe to skip
             }

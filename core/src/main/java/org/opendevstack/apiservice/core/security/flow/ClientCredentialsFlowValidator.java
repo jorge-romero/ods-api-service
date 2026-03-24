@@ -1,10 +1,11 @@
 package org.opendevstack.apiservice.core.security.flow;
 
-import java.util.List;
-
+import org.opendevstack.apiservice.core.contracts.auth.AuthType;
 import org.opendevstack.apiservice.core.config.SecurityProperties;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class ClientCredentialsFlowValidator implements AuthFlowValidator {
@@ -16,8 +17,8 @@ public class ClientCredentialsFlowValidator implements AuthFlowValidator {
     }
 
     @Override
-    public AuthFlowType getSupportedFlow() {
-        return AuthFlowType.CLIENT_CREDENTIALS;
+    public AuthType getSupportedFlow() {
+        return AuthType.CLIENT_CREDENTIALS;
     }
 
     @Override
