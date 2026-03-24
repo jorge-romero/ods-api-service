@@ -20,7 +20,6 @@ public class SecurityProperties {
     private String[] publicEndpoints = {
         "/api/public/**",
         "/actuator/health",
-        "/actuator/info",
-        "/h2-console/**"
+        "/actuator/info"
     };
 }
