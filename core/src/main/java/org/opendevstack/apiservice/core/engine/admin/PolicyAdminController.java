@@ -1,7 +1,9 @@
 package org.opendevstack.apiservice.core.engine.admin;
 
-import org.opendevstack.apiservice.core.engine.authorization.PolicyCacheService;
+import org.opendevstack.apiservice.core.config.CacheConfig;
 import org.opendevstack.apiservice.core.engine.registry.CoreApiRegistry;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,22 +14,28 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/admin")
 public class PolicyAdminController {
 
-    private final PolicyCacheService policyCacheService;
+    private final CacheManager cacheManager;
     private final CoreApiRegistry apiRegistry;
 
-    public PolicyAdminController(PolicyCacheService policyCacheService,
+    public PolicyAdminController(CacheManager cacheManager,
                                  CoreApiRegistry apiRegistry) {
-        this.policyCacheService = policyCacheService;
+        this.cacheManager = cacheManager;
         this.apiRegistry = apiRegistry;
     }
 
     @PostMapping("/policies/refresh")
     public ResponseEntity<String> refreshPolicies(
             @RequestParam(required = false) String apiId) {
+        Cache cache = cacheManager.getCache(CacheConfig.POLICIES_CACHE);
+        if (cache == null) {
+            return ResponseEntity.ok("Policy cache not found");
+        }
         if (apiId != null) {
-            policyCacheService.invalidate(apiId);
+            com.github.benmanes.caffeine.cache.Cache<Object, Object> nativeCache =
+                    (com.github.benmanes.caffeine.cache.Cache<Object, Object>) cache.getNativeCache();
+            nativeCache.asMap().keySet().removeIf(k -> k.toString().startsWith(apiId + "::"));
         } else {
-            policyCacheService.invalidateAll();
+            cache.invalidate();
         }
         return ResponseEntity.ok("Policy cache refreshed");
     }

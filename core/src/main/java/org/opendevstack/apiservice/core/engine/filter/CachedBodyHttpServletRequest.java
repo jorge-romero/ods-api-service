@@ -17,18 +17,41 @@ import java.nio.charset.StandardCharsets;
 /**
  * Request wrapper that eagerly reads and caches the body, allowing it to be
  * read multiple times (e.g. once by a policy evaluator and again by the controller).
+ *
+ * <p>The cached bytes are also stored as a request attribute under
+ * {@link #CACHED_BODY_ATTR} so that downstream components can retrieve
+ * them regardless of how many {@link HttpServletRequestWrapper} layers
+ * (e.g. Spring Security's {@code FirewalledRequest}) sit on top.
  */
 public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
+
+    /**
+     * Request attribute key under which the cached body {@code byte[]} is stored.
+     * Use {@link #getCachedBody(HttpServletRequest)} for convenient, wrapper-safe access.
+     */
+    public static final String CACHED_BODY_ATTR = "oas.cachedRequestBody";
 
     private final byte[] cachedBody;
 
     public CachedBodyHttpServletRequest(HttpServletRequest request) throws IOException {
         super(request);
         this.cachedBody = StreamUtils.copyToByteArray(request.getInputStream());
+        request.setAttribute(CACHED_BODY_ATTR, this.cachedBody);
     }
 
     public byte[] getBody() {
         return cachedBody;
+    }
+
+    /**
+     * Retrieves the cached body from any request, regardless of wrapper layers.
+     *
+     * @param request the current request (may be wrapped multiple times)
+     * @return the cached body bytes, or {@code null} if the body was not cached
+     */
+    public static byte[] getCachedBody(HttpServletRequest request) {
+        Object attr = request.getAttribute(CACHED_BODY_ATTR);
+        return (attr instanceof byte[] bytes) ? bytes : null;
     }
 
     @Override

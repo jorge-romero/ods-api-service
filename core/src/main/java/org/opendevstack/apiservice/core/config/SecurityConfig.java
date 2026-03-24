@@ -54,6 +54,39 @@ public class SecurityConfig {
         return registration;
     }
 
+    /**
+     * Prevents AuthTypeEnforcementFilter from being auto-registered as a
+     * standalone servlet filter by Spring Boot (since it's @Component).
+     * Same rationale as {@link #apiRegistryFilterRegistration()}.
+     */
+    @Bean
+    public FilterRegistrationBean<AuthTypeEnforcementFilter> authTypeEnforcementFilterRegistration() {
+        FilterRegistrationBean<AuthTypeEnforcementFilter> registration =
+                new FilterRegistrationBean<>(authTypeEnforcementFilter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    /**
+     * Prevents RequestBodyCachingFilter from being auto-registered as a
+     * standalone servlet filter by Spring Boot (since it is a Filter @Bean).
+     * Without this, the filter runs both outside and inside the security chain:
+     * <ul>
+     *   <li>Outside: caches the body before FilterChainProxy wraps the request
+     *       in a {@code FirewalledRequest}.</li>
+     *   <li>Inside: OncePerRequestFilter skips (already ran), so
+     *       {@code PolicyAuthorizationManager} sees a {@code FirewalledRequest}
+     *       instead of a {@code CachedBodyHttpServletRequest}.</li>
+     * </ul>
+     */
+    @Bean
+    public FilterRegistrationBean<RequestBodyCachingFilter> requestBodyCachingFilterRegistration(
+            RequestBodyCachingFilter filter) {
+        FilterRegistrationBean<RequestBodyCachingFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
     @Bean
     public RequestBodyCachingFilter requestBodyCachingFilter() {
         return new RequestBodyCachingFilter();

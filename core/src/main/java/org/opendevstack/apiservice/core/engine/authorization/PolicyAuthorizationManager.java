@@ -28,16 +28,16 @@ import java.util.function.Supplier;
 public class PolicyAuthorizationManager implements AuthorizationManager<RequestAuthorizationContext> {
 
     private final PolicyEngine policyEngine;
-    private final PolicyCacheService policyCacheService;
+    private final PolicyService policyService;
     private final PolicyContextFactory contextFactory;
     private final ObjectMapper objectMapper;
 
     public PolicyAuthorizationManager(PolicyEngine policyEngine,
-                                      PolicyCacheService policyCacheService,
+                                      PolicyService policyService,
                                       PolicyContextFactory contextFactory,
                                       ObjectMapper objectMapper) {
         this.policyEngine = policyEngine;
-        this.policyCacheService = policyCacheService;
+        this.policyService = policyService;
         this.contextFactory = contextFactory;
         this.objectMapper = objectMapper;
     }
@@ -62,17 +62,21 @@ public class PolicyAuthorizationManager implements AuthorizationManager<RequestA
 
         PolicyContext policyContext = contextFactory.create(apiDef, request);
 
-        // Enrich context with request body if it has been cached
-        if (request instanceof CachedBodyHttpServletRequest cached && cached.getBody().length > 0) {
+        // Enrich context with request body if it has been cached.
+        // Uses the request-attribute lookup so the cached bytes are found even when
+        // the original CachedBodyHttpServletRequest is buried under wrapper layers
+        // (e.g. Spring Security's FirewalledRequest).
+        byte[] cachedBody = CachedBodyHttpServletRequest.getCachedBody(request);
+        if (cachedBody != null && cachedBody.length > 0) {
             try {
-                Map<String, Object> body = objectMapper.readValue(cached.getBody(), new TypeReference<>() {});
+                Map<String, Object> body = objectMapper.readValue(cachedBody, new TypeReference<>() {});
                 policyContext = policyContext.withRequestBody(body);
             } catch (Exception ignored) {
                 // body is not JSON (GET, form-data, etc.) — safe to skip
             }
         }
 
-        List<PolicyRule> rules = policyCacheService.getPolicies(apiDef.getId(), policyContext.getClientId());
+        List<PolicyRule> rules = policyService.findPolicies(apiDef.getId(), policyContext.getClientId());
 
         AuthorizationDecision decision = policyEngine.evaluate(policyContext, rules);
 

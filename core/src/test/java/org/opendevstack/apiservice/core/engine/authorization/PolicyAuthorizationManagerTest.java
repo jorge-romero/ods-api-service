@@ -23,11 +23,11 @@ class PolicyAuthorizationManagerTest {
     @Test
     void requestWithoutApiDefinition_isDenied() {
         PolicyEngine policyEngine = mock(PolicyEngine.class);
-        PolicyCacheService policyCacheService = mock(PolicyCacheService.class);
+        PolicyService policyService = mock(PolicyService.class);
         PolicyContextFactory contextFactory = mock(PolicyContextFactory.class);
         PolicyAuthorizationManager manager = new PolicyAuthorizationManager(
                 policyEngine,
-                policyCacheService,
+                policyService,
                 contextFactory,
                 new ObjectMapper());
 
@@ -37,17 +37,17 @@ class PolicyAuthorizationManagerTest {
         var decision = manager.check(() -> null, new RequestAuthorizationContext(request));
 
         assertFalse(decision.isGranted());
-        verifyNoInteractions(policyEngine, policyCacheService, contextFactory);
+        verifyNoInteractions(policyEngine, policyService, contextFactory);
     }
 
     @Test
     void requestWithPublicApiDefinition_isAllowed() {
         PolicyEngine policyEngine = mock(PolicyEngine.class);
-        PolicyCacheService policyCacheService = mock(PolicyCacheService.class);
+        PolicyService policyService = mock(PolicyService.class);
         PolicyContextFactory contextFactory = mock(PolicyContextFactory.class);
         PolicyAuthorizationManager manager = new PolicyAuthorizationManager(
                 policyEngine,
-                policyCacheService,
+                policyService,
                 contextFactory,
                 new ObjectMapper());
 
@@ -58,17 +58,17 @@ class PolicyAuthorizationManagerTest {
         var decision = manager.check(() -> null, new RequestAuthorizationContext(request));
 
         assertTrue(decision.isGranted());
-        verifyNoInteractions(policyEngine, policyCacheService, contextFactory);
+        verifyNoInteractions(policyEngine, policyService, contextFactory);
     }
 
     @Test
     void nonPublicApiDefinition_delegatesToPolicyEngine() {
         PolicyEngine policyEngine = mock(PolicyEngine.class);
-        PolicyCacheService policyCacheService = mock(PolicyCacheService.class);
+        PolicyService policyService = mock(PolicyService.class);
         PolicyContextFactory contextFactory = mock(PolicyContextFactory.class);
         PolicyAuthorizationManager manager = new PolicyAuthorizationManager(
                 policyEngine,
-                policyCacheService,
+                policyService,
                 contextFactory,
                 new ObjectMapper());
 
@@ -79,7 +79,7 @@ class PolicyAuthorizationManagerTest {
         PolicyContext policyContext = mock(PolicyContext.class);
         when(policyContext.getClientId()).thenReturn("client-1");
         when(contextFactory.create(apiDefinition, request)).thenReturn(policyContext);
-        when(policyCacheService.getPolicies("api-1", "client-1")).thenReturn(List.of());
+        when(policyService.findPolicies("api-1", "client-1")).thenReturn(List.of());
         when(policyEngine.evaluate(policyContext, List.of())).thenReturn(AuthorizationDecision.PERMIT);
 
         var decision = manager.check(() -> null, new RequestAuthorizationContext(request));
