@@ -19,7 +19,7 @@ public class PolicyEngine {
 
     public AuthorizationDecision evaluate(PolicyContext context, List<PolicyRule> rules) {
         if (rules == null || rules.isEmpty()) {
-            return AuthorizationDecision.PERMIT;
+            return AuthorizationDecision.DENY;
         }
 
         AuthorizationDecision finalDecision = AuthorizationDecision.ABSTAIN;
