@@ -1,7 +1,7 @@
 package org.opendevstack.apiservice.persistence.dao;
 
 import org.opendevstack.apiservice.core.contracts.persistence.ClientDao;
-import org.opendevstack.apiservice.persistence.repository.ClientJpaRepository;
+import org.opendevstack.apiservice.persistence.repository.ClientAppRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -9,19 +9,19 @@ import java.util.Optional;
 @Service
 public class ClientDaoImpl implements ClientDao {
 
-    private final ClientJpaRepository repository;
+    private final ClientAppRepository repository;
 
-    public ClientDaoImpl(ClientJpaRepository repository) {
+    public ClientDaoImpl(ClientAppRepository repository) {
         this.repository = repository;
     }
 
     @Override
-    public Optional<ClientInfo> findByAzureClientId(String azureClientId) {
-        return repository.findByAzureClientId(azureClientId)
+    public Optional<ClientInfo> findByClientId(String clientId) {
+        return repository.findByClientId(clientId)
                 .map(entity -> new ClientInfo(
                         entity.getId(),
-                        entity.getAzureClientId(),
-                        entity.getName(),
+                        entity.getClientId(),
+                        entity.getClientName(),
                         entity.isEnabled()
                 ));
     }

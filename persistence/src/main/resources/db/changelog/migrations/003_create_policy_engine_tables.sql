@@ -2,8 +2,7 @@
 
 -- ============================================================================
 -- changeset ods:006-create-api-definitions
--- Description: API definitions table (replaces api_resources for the new
---   policy-engine model). Each row represents a managed API module.
+-- Description: API definitions table Each row represents a managed API module.
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS api_definitions (
     id          UUID            NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -32,30 +31,6 @@ COMMENT ON COLUMN api_definitions.proxy_url  IS 'If set, requests are proxied to
 
 --rollback DROP INDEX IF EXISTS uq_api_definitions_api_id;
 --rollback DROP TABLE IF EXISTS api_definitions;
-
-
--- ============================================================================
--- changeset ods:006-create-clients
--- Description: Registered OAuth2 clients (simplified from client_apps).
--- ============================================================================
-CREATE TABLE IF NOT EXISTS clients (
-    id                UUID            NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-    azure_client_id   VARCHAR(36)     NOT NULL,
-    name              VARCHAR(255)    NOT NULL,
-    enabled           BOOLEAN         NOT NULL DEFAULT TRUE,
-    created_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-    updated_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW()
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS uq_clients_azure_client_id
-    ON clients (azure_client_id);
-
-COMMENT ON TABLE  clients                   IS 'Registered OAuth2 / Azure AD application clients';
-COMMENT ON COLUMN clients.azure_client_id   IS 'Azure AD Application (client) UUID';
-COMMENT ON COLUMN clients.name              IS 'Human-readable application name';
-
---rollback DROP INDEX IF EXISTS uq_clients_azure_client_id;
---rollback DROP TABLE IF EXISTS clients;
 
 
 -- ============================================================================
@@ -92,46 +67,15 @@ COMMENT ON COLUMN authorization_policies.policy_config      IS 'Evaluator-specif
 
 
 -- ============================================================================
--- changeset ods:006-migrate-clients-from-client-apps
--- Description: Copy existing client_apps data into the new clients table.
--- ============================================================================
-INSERT INTO clients (azure_client_id, name, enabled, created_at, updated_at)
-SELECT ca.client_id, COALESCE(ca.client_name, 'Unknown'), ca.enabled, ca.created_at, ca.updated_at
-FROM client_apps ca
-ON CONFLICT (azure_client_id) DO NOTHING;
-
---rollback DELETE FROM clients WHERE azure_client_id IN (SELECT client_id FROM client_apps);
-
-
--- ============================================================================
 -- changeset ods:006-seed-api-definitions
--- Description: Seed API definitions from the existing api_resources entries.
+-- Description: Seed API definitions.
 -- ============================================================================
 INSERT INTO api_definitions (api_id, name, base_path, version, auth_types, is_public, enabled)
 VALUES
     ('project-v0',       'Project API v0',       'projects',       'v0', ARRAY['CLIENT_CREDENTIALS'], FALSE, TRUE),
-    ('project-users-v1', 'Project Users API v1', 'projects/users', 'v1', ARRAY['CLIENT_CREDENTIALS', 'OBO'], FALSE, TRUE)
+    ('project-users-v1', 'Project Users API v1', 'projects/*/users', 'v1', ARRAY['CLIENT_CREDENTIALS'], FALSE, TRUE),
+    ('project-platforms-v1', 'Project Platforms API v1', 'projects/*/platforms', 'v1', ARRAY['NONE'], FALSE, TRUE)
 ON CONFLICT (api_id) DO NOTHING;
 
 --rollback DELETE FROM api_definitions WHERE api_id IN ('project-v0', 'project-users-v1');
 
-
--- ============================================================================
--- changeset ods:006-seed-allowed-clients-policy
--- Description: Create an ALLOWED_CLIENTS policy for the project-v0 API
---   based on the existing client that had api-writer role with POST permission.
--- ============================================================================
-INSERT INTO authorization_policies (api_definition_id, client_id, policy_type, policy_config)
-SELECT
-    'project-v0',
-    ca.client_id,
-    'ALLOWED_CLIENTS',
-    jsonb_build_object('allowedClients', jsonb_build_array(ca.client_id))
-FROM client_apps ca
-WHERE ca.client_id = '56a0fc62-bf77-4acb-8cd7-8cc9f5f2198f'
-  AND ca.enabled = true
-ON CONFLICT DO NOTHING;
-
---rollback DELETE FROM authorization_policies
---rollback WHERE api_definition_id = 'project-v0'
---rollback   AND policy_type = 'ALLOWED_CLIENTS';

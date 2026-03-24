@@ -1,6 +1,6 @@
 package org.opendevstack.apiservice.core.config;
 
-import org.opendevstack.apiservice.core.contracts.registry.ApiDefinition;
+import org.opendevstack.apiservice.core.engine.authorization.PolicyAuthorizationManager;
 import org.opendevstack.apiservice.core.engine.filter.ApiRegistryFilter;
 import org.opendevstack.apiservice.core.security.filter.AuthTypeEnforcementFilter;
 import org.opendevstack.apiservice.core.security.jwt.AzureJwtAuthenticationConverter;
@@ -8,8 +8,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -25,6 +23,7 @@ public class SecurityConfig {
     private final AzureJwtAuthenticationConverter jwtConverter;
     private final AuthTypeEnforcementFilter authTypeEnforcementFilter;
     private final ApiRegistryFilter apiRegistryFilter;
+    private final PolicyAuthorizationManager policyAuthorizationManager;
     private final SecurityProperties securityProperties;
 
     @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
@@ -33,10 +32,12 @@ public class SecurityConfig {
     public SecurityConfig(AzureJwtAuthenticationConverter jwtConverter,
                           AuthTypeEnforcementFilter authTypeEnforcementFilter,
                           ApiRegistryFilter apiRegistryFilter,
+                          PolicyAuthorizationManager policyAuthorizationManager,
                           SecurityProperties securityProperties) {
         this.jwtConverter = jwtConverter;
         this.authTypeEnforcementFilter = authTypeEnforcementFilter;
         this.apiRegistryFilter = apiRegistryFilter;
+        this.policyAuthorizationManager = policyAuthorizationManager;
         this.securityProperties = securityProperties;
     }
 
@@ -48,13 +49,6 @@ public class SecurityConfig {
     @Bean
     public FilterRegistrationBean<ApiRegistryFilter> apiRegistryFilterRegistration() {
         FilterRegistrationBean<ApiRegistryFilter> registration = new FilterRegistrationBean<>(apiRegistryFilter);
-        registration.setEnabled(false);
-        return registration;
-    }
-
-    @Bean
-    public FilterRegistrationBean<AuthTypeEnforcementFilter> authTypeEnforcementFilterRegistration() {
-        FilterRegistrationBean<AuthTypeEnforcementFilter> registration = new FilterRegistrationBean<>(authTypeEnforcementFilter);
         registration.setEnabled(false);
         return registration;
     }
@@ -76,17 +70,7 @@ public class SecurityConfig {
                                 .forEach(endpoint -> auth.requestMatchers(endpoint).permitAll());
                     }
                     auth.requestMatchers("/admin/**").hasRole("admin");
-                    // Check if the resolved API definition is public
-                    auth.anyRequest().access((authentication, context) -> {
-                        var request = context.getRequest();
-                        Object apiDefAttr = request.getAttribute("oas.apiDefinition");
-                        
-                        if (apiDefAttr instanceof ApiDefinition def && def.isPublic()) {
-                            return new AuthorizationDecision(true);
-                        }
-                        
-                        return new AuthorizationDecision(authentication.get().isAuthenticated());
-                    });
+                    auth.anyRequest().access(policyAuthorizationManager);
                 })
                 .build();
     }

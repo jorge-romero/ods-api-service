@@ -26,6 +26,8 @@ import java.util.Map;
 @Order(3)
 public class PolicyEnforcementFilter extends OncePerRequestFilter {
 
+    public static final String POLICY_PERMIT_ATTR = "policy.permit";
+
     private final PolicyEngine policyEngine;
     private final PolicyCacheService policyCacheService;
     private final PolicyContextFactory contextFactory;
@@ -74,6 +76,7 @@ public class PolicyEnforcementFilter extends OncePerRequestFilter {
             return;
         }
 
+        request.setAttribute(POLICY_PERMIT_ATTR, true);
         filterChain.doFilter(request, response);
     }
 }

@@ -31,7 +31,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"projectFlavors", "appRoles"})
+@ToString(exclude = {"projectFlavors"})
 public class ClientAppEntity {
 
 	@Id
@@ -56,11 +56,6 @@ public class ClientAppEntity {
 	@OneToMany(mappedBy = "clientApp", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
 	private Set<ClientAppProjectFlavorEntity> projectFlavors = new LinkedHashSet<>();
-
-	/** Roles assigned to this client application. */
-	@OneToMany(mappedBy = "clientApp", cascade = CascadeType.ALL, orphanRemoval = true)
-	@Builder.Default
-	private Set<ClientAppRoleEntity> appRoles = new LinkedHashSet<>();
 
 	/** Original creation timestamp (UTC). Set automatically on first persist. */
 	@Column(name = "created_at", nullable = false, updatable = false,

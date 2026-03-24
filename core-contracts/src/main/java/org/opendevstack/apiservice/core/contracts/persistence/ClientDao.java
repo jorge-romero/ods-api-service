@@ -9,14 +9,14 @@ import java.util.UUID;
  */
 public interface ClientDao {
 
-    Optional<ClientInfo> findByAzureClientId(String azureClientId);
+    Optional<ClientInfo> findByClientId(String clientId);
 
     /**
      * Read-only projection of a client record.
      */
     record ClientInfo(
             UUID id,
-            String azureClientId,
+            String clientId,
             String name,
             boolean enabled
     ) {}

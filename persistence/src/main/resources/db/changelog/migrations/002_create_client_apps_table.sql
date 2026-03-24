@@ -8,7 +8,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE TABLE IF NOT EXISTS client_apps (
     id          UUID            NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     client_id   VARCHAR(36)     NOT NULL,
-    client_name VARCHAR(255),
+    client_name VARCHAR(255)     NOT NULL,
     enabled     BOOLEAN         NOT NULL DEFAULT TRUE,
     created_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW()
