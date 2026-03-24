@@ -35,6 +35,12 @@
             <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
 
+        <!-- Caffeine cache for policy engine -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
         <!-- Spring Boot Actuator for monitoring and management -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -47,6 +53,12 @@
             <artifactId>spring-boot-devtools</artifactId>
             <scope>runtime</scope>
             <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>core-contracts</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- External Service API -->

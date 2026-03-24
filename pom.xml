@@ -47,6 +47,7 @@
         <module>external-service-api</module>
         <module>persistence</module>
         <module>service-app-clients</module>
+        <module>core-contracts</module>
         <module>core</module>
         <module>external-service-aap</module>
         <module>external-service-projects-info-service</module>
