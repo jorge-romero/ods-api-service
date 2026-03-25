@@ -53,10 +53,6 @@ public class ClientAppProjectFlavorEntity {
 	@Column(name = "project_key_pattern", nullable = false, length = 100)
 	private String projectKeyPattern;
 
-	/** Optional ODS/Jira template identifier. */
-	@Column(name = "template_id")
-	private Integer templateId;
-
 	/** Default project owner. */
 	@Column(name = "project_owner", length = 255)
 	private String projectOwner;

@@ -34,7 +34,6 @@ CREATE TABLE IF NOT EXISTS client_app_project_flavors (
     client_app_id        UUID            NOT NULL,
     name                 VARCHAR(50)     NOT NULL,
     project_key_pattern  VARCHAR(100)    NOT NULL,
-    template_id          INT,
     project_owner        VARCHAR(255),
     service_account      VARCHAR(255),
     config_item          VARCHAR(255),
@@ -54,7 +53,6 @@ COMMENT ON TABLE  client_app_project_flavors                      IS 'Project fl
 COMMENT ON COLUMN client_app_project_flavors.client_app_id        IS 'FK to client_apps.id (UUID)';
 COMMENT ON COLUMN client_app_project_flavors.name                 IS 'Flavor name (e.g. DLSS, AMP)';
 COMMENT ON COLUMN client_app_project_flavors.project_key_pattern  IS 'printf-style pattern used to generate the project key (e.g. DLSS%06d)';
-COMMENT ON COLUMN client_app_project_flavors.template_id          IS 'ODS/Jira template identifier';
 COMMENT ON COLUMN client_app_project_flavors.project_owner        IS 'Default project owner username';
 COMMENT ON COLUMN client_app_project_flavors.service_account      IS 'Service account associated with the flavor';
 COMMENT ON COLUMN client_app_project_flavors.config_item          IS 'Default CMDB configuration item for projects created under this flavor';
