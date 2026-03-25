@@ -8,9 +8,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE TABLE IF NOT EXISTS client_apps (
     id          UUID            NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     client_id   VARCHAR(36)     NOT NULL,
-    client_name VARCHAR(255),
-    permissions TEXT[]          NOT NULL DEFAULT '{}',
-    role_scope  TEXT,
+    client_name VARCHAR(255)     NOT NULL,
     enabled     BOOLEAN         NOT NULL DEFAULT TRUE,
     created_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW()
@@ -22,8 +20,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_client_apps_client_id
 COMMENT ON TABLE  client_apps             IS 'Azure AD clients authorised to call the service APIs';
 COMMENT ON COLUMN client_apps.client_id   IS 'Azure AD Application (client) UUID';
 COMMENT ON COLUMN client_apps.client_name IS 'Azure AD application display name';
-COMMENT ON COLUMN client_apps.permissions IS 'Granted permissions; known values: project:add, project:detail, project:list';
-COMMENT ON COLUMN client_apps.role_scope  IS 'OAuth2 scope or role granted to this client (e.g. api.read, api.write)';
 COMMENT ON COLUMN client_apps.enabled     IS 'When FALSE the client is denied access without removing the row';
 
 --rollback DROP INDEX IF EXISTS uq_client_apps_client_id;

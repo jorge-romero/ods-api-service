@@ -42,6 +42,12 @@
             <optional>true</optional>
         </dependency>
 
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>core-contracts</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Test dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
