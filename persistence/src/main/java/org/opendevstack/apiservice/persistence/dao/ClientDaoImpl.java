@@ -1,6 +1,7 @@
 package org.opendevstack.apiservice.persistence.dao;
 
 import org.opendevstack.apiservice.core.contracts.persistence.ClientDao;
+import org.opendevstack.apiservice.core.contracts.persistence.ClientInfo;
 import org.opendevstack.apiservice.persistence.repository.ClientAppRepository;
 import org.springframework.stereotype.Service;
 
