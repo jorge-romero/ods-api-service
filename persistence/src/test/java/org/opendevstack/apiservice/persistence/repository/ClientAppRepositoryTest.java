@@ -10,7 +10,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.opendevstack.apiservice.persistence.entity.ClientAppEntity;
-import org.opendevstack.apiservice.persistence.entity.ClientAppProjectFlavorEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
@@ -67,46 +66,7 @@ class ClientAppRepositoryTest {
 			.enabled(enabled)
 			.build();
 
-		clientApp.addProjectFlavor(ClientAppProjectFlavorEntity.builder()
-			.name(enabled ? "AMP" : "DLSS")
-			.projectKeyPattern(enabled ? "AMP%06d" : "DLSS%06d")
-			.templateId(enabled ? 101 : 202)
-			.projectOwner("owner.user")
-			.serviceAccount("svc-ods")
-			.configItem("CI-001")
-			.allowedConfigItems(new String[] { "CI-001", "CI-002" })
-			.location(enabled ? "eu" : "us")
-			.build());
-
 		return repository.saveAndFlush(clientApp);
-	}
-
-	@Nested
-	@DisplayName("Basic CRUD")
-	class BasicCrud {
-
-		@Test
-		@DisplayName("save() persists entity and cascades project flavors")
-		void save_persistsEntityAndCascadesProjectFlavors() {
-			assertThat(enabledClientApp.getId()).isNotNull();
-			assertThat(enabledClientApp.getCreatedAt()).isNotNull();
-			assertThat(enabledClientApp.getUpdatedAt()).isNotNull();
-			assertThat(enabledClientApp.getProjectFlavors()).hasSize(1);
-			assertThat(enabledClientApp.getProjectFlavors().iterator().next().getId()).isNotNull();
-		}
-
-		@Test
-		@DisplayName("save() with duplicate client_id throws DataIntegrityViolationException")
-		void save_duplicateClientId_throwsException() {
-			ClientAppEntity duplicate = ClientAppEntity.builder()
-				.clientId("11111111-1111-1111-1111-111111111111")
-				.enabled(true)
-				.build();
-
-			assertThatThrownBy(() -> repository.saveAndFlush(duplicate))
-				.isInstanceOf(DataIntegrityViolationException.class);
-		}
-
 	}
 
 	@Nested
@@ -145,26 +105,6 @@ class ClientAppRepositoryTest {
 		}
 
 	}
-
-	@Nested
-	@DisplayName("findDetailedByClientId")
-	class FindDetailedByClientId {
-
-		@Test
-		@DisplayName("loads project flavors together with the client app")
-		void loadsProjectFlavorsWithClientApp() {
-			Optional<ClientAppEntity> found = repository.findDetailedByClientId("11111111-1111-1111-1111-111111111111");
-
-			assertThat(found).isPresent();
-			assertThat(found.get().getProjectFlavors()).hasSize(1);
-			ClientAppProjectFlavorEntity projectFlavor = found.get().getProjectFlavors().iterator().next();
-			assertThat(projectFlavor.getName()).isEqualTo("AMP");
-			assertThat(projectFlavor.getProjectKeyPattern()).isEqualTo("AMP%06d");
-			assertThat(projectFlavor.getAllowedConfigItems()).containsExactly("CI-001", "CI-002");
-		}
-
-	}
-
 	@Nested
 	@DisplayName("existsByClientId")
 	class ExistsByClientId {

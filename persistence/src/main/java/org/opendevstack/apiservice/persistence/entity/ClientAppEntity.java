@@ -31,7 +31,6 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"projectFlavors"})
 public class ClientAppEntity {
 
 	@Id
@@ -52,10 +51,6 @@ public class ClientAppEntity {
 	@Builder.Default
 	private boolean enabled = true;
 
-	/** Project creation flavors configured for this client app. */
-	@OneToMany(mappedBy = "clientApp", cascade = CascadeType.ALL, orphanRemoval = true)
-	@Builder.Default
-	private Set<ClientAppProjectFlavorEntity> projectFlavors = new LinkedHashSet<>();
 
 	/** Original creation timestamp (UTC). Set automatically on first persist. */
 	@Column(name = "created_at", nullable = false, updatable = false,
@@ -65,24 +60,6 @@ public class ClientAppEntity {
 	/** Timestamp of last update (UTC). Updated automatically on every merge. */
 	@Column(name = "updated_at", nullable = false, columnDefinition = "TIMESTAMPTZ")
 	private OffsetDateTime updatedAt;
-
-	/**
-	 * Adds a project flavor and synchronizes the reverse side of the relationship.
-	 * @param projectFlavor flavor to attach
-	 */
-	public void addProjectFlavor(ClientAppProjectFlavorEntity projectFlavor) {
-		projectFlavors.add(projectFlavor);
-		projectFlavor.setClientApp(this);
-	}
-
-	/**
-	 * Removes a project flavor and synchronizes the reverse side of the relationship.
-	 * @param projectFlavor flavor to detach
-	 */
-	public void removeProjectFlavor(ClientAppProjectFlavorEntity projectFlavor) {
-		projectFlavors.remove(projectFlavor);
-		projectFlavor.setClientApp(null);
-	}
 
 	@PrePersist
 	void onPrePersist() {
