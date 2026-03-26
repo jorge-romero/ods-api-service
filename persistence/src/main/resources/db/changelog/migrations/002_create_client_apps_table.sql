@@ -8,9 +8,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE TABLE IF NOT EXISTS client_apps (
     id          UUID            NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     client_id   VARCHAR(36)     NOT NULL,
-    client_name VARCHAR(255),
-    permissions TEXT[]          NOT NULL DEFAULT '{}',
-    role_scope  TEXT,
+    client_name VARCHAR(255)     NOT NULL,
     enabled     BOOLEAN         NOT NULL DEFAULT TRUE,
     created_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW()
@@ -22,8 +20,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_client_apps_client_id
 COMMENT ON TABLE  client_apps             IS 'Azure AD clients authorised to call the service APIs';
 COMMENT ON COLUMN client_apps.client_id   IS 'Azure AD Application (client) UUID';
 COMMENT ON COLUMN client_apps.client_name IS 'Azure AD application display name';
-COMMENT ON COLUMN client_apps.permissions IS 'Granted permissions; known values: project:add, project:detail, project:list';
-COMMENT ON COLUMN client_apps.role_scope  IS 'OAuth2 scope or role granted to this client (e.g. api.read, api.write)';
 COMMENT ON COLUMN client_apps.enabled     IS 'When FALSE the client is denied access without removing the row';
 
 --rollback DROP INDEX IF EXISTS uq_client_apps_client_id;
@@ -38,7 +34,6 @@ CREATE TABLE IF NOT EXISTS client_app_project_flavors (
     client_app_id        UUID            NOT NULL,
     name                 VARCHAR(50)     NOT NULL,
     project_key_pattern  VARCHAR(100)    NOT NULL,
-    template_id          INT,
     project_owner        VARCHAR(255),
     service_account      VARCHAR(255),
     config_item          VARCHAR(255),
@@ -58,7 +53,6 @@ COMMENT ON TABLE  client_app_project_flavors                      IS 'Project fl
 COMMENT ON COLUMN client_app_project_flavors.client_app_id        IS 'FK to client_apps.id (UUID)';
 COMMENT ON COLUMN client_app_project_flavors.name                 IS 'Flavor name (e.g. DLSS, AMP)';
 COMMENT ON COLUMN client_app_project_flavors.project_key_pattern  IS 'printf-style pattern used to generate the project key (e.g. DLSS%06d)';
-COMMENT ON COLUMN client_app_project_flavors.template_id          IS 'ODS/Jira template identifier';
 COMMENT ON COLUMN client_app_project_flavors.project_owner        IS 'Default project owner username';
 COMMENT ON COLUMN client_app_project_flavors.service_account      IS 'Service account associated with the flavor';
 COMMENT ON COLUMN client_app_project_flavors.config_item          IS 'Default CMDB configuration item for projects created under this flavor';
