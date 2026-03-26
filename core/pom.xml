@@ -30,6 +30,13 @@
             <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
         </dependency>
 
+        <!-- Core Security module: Security configuration and JWT handling -->
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>core-security</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>
@@ -127,6 +134,11 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>api-project-component-v0</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- Service Projects module: project creation and key generation -->
         <dependency>
             <groupId>org.opendevstack.apiservice</groupId>

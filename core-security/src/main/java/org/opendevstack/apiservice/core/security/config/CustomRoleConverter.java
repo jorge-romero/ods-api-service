@@ -1,4 +1,4 @@
-package org.opendevstack.apiservice.core.config;
+package org.opendevstack.apiservice.core.security.config;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.core.GrantedAuthority;
@@ -19,20 +19,31 @@ public class CustomRoleConverter implements Converter<Jwt, Collection<GrantedAut
         if (jwt == null) {
             return List.of();
         }
-        // Extract realm roles (Keycloak/Auth0 standard)
+        // Extract Azure Entra ID top-level roles claim
+        List<String> entraRoles = getEntraRoles(jwt);
+
+        // Extract realm roles (Keycloak standard)
         List<String> realmRoles = getRealmRoles(jwt);
 
-        // Extract resource roles (client-specific roles)
+        // Extract resource roles (Keycloak client-specific roles)
         List<String> resourceRoles = getResourceRoles(jwt);
 
         // Combine all roles
-        List<String> allRoles = combineRoles(realmRoles, resourceRoles);
+        List<String> allRoles = java.util.stream.Stream.of(entraRoles, realmRoles, resourceRoles)
+            .flatMap(Collection::stream)
+            .toList();
 
         // Convert to GrantedAuthority with ROLE_ prefix
         return allRoles.stream()
             .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
             .map(GrantedAuthority.class::cast)
             .toList();
+    }
+
+    private List<String> getEntraRoles(Jwt jwt) {
+        // Azure Entra ID puts app roles in a top-level "roles" claim
+        List<String> roles = jwt.getClaimAsStringList(ROLES_CLAIM);
+        return roles != null ? roles : List.of();
     }
 
     private List<String> getRealmRoles(Jwt jwt) {
@@ -67,12 +78,5 @@ public class CustomRoleConverter implements Converter<Jwt, Collection<GrantedAut
             }
         }
         return List.of();
-    }
-
-    private List<String> combineRoles(List<String> realmRoles, List<String> resourceRoles) {
-        return java.util.stream.Stream.concat(
-            realmRoles.stream(),
-            resourceRoles.stream()
-        ).toList();
     }
 }

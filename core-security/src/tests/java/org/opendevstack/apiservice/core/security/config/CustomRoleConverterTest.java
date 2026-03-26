@@ -1,4 +1,4 @@
-package org.opendevstack.apiservice.core.config;
+package org.opendevstack.apiservice.core.security.config;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
