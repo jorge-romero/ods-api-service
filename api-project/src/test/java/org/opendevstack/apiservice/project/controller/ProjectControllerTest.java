@@ -1,15 +1,16 @@
 package org.opendevstack.apiservice.project.controller;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
 import org.opendevstack.apiservice.project.exception.ProjectCreationException;
 import org.opendevstack.apiservice.project.exception.ProjectKeyGenerationException;
 import org.opendevstack.apiservice.project.facade.ProjectsFacade;
 import org.opendevstack.apiservice.project.model.CreateProjectRequest;
 import org.opendevstack.apiservice.project.model.CreateProjectResponse;
+import org.opendevstack.apiservice.project.validation.ProjectRequestValidator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -19,22 +20,31 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class ProjectControllerTest {
 
     @Mock
     private ProjectsFacade projectsFacade;
 
+    @Mock
+    private ProjectRequestValidator projectRequestValidator;
+
     private ProjectController sut;
+    private AutoCloseable mocks;
 
     @BeforeEach
     void setup() {
-        sut = new ProjectController(projectsFacade);
+        mocks = MockitoAnnotations.openMocks(this);
+        sut = new ProjectController(projectsFacade, projectRequestValidator);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        mocks.close();
     }
 
     @Test
-    void createProject_whenSuccess_thenReturnOk() throws Exception {
-        CreateProjectRequest request = new CreateProjectRequest("My Project");
+    void create_project_returns_ok_when_creation_succeeds() throws Exception {
+        CreateProjectRequest request = new CreateProjectRequest();
         request.setProjectKey("PROJ01");
 
         CreateProjectResponse serviceResponse = new CreateProjectResponse();
@@ -54,11 +64,12 @@ class ProjectControllerTest {
         assertThat(result.getBody().getError()).isNull();
         assertThat(result.getBody().getErrorKey()).isNull();
         assertThat(result.getBody().getErrorDescription()).isNull();
+        verify(projectRequestValidator).validate(request);
     }
 
     @Test
-    void createProject_whenProjectCreationException_thenReturnConflict() throws Exception {
-        CreateProjectRequest request = new CreateProjectRequest("My Project");
+    void create_project_returns_conflict_when_project_creation_exception_is_thrown() throws Exception {
+        CreateProjectRequest request = new CreateProjectRequest();
         request.setProjectKey("EXISTING");
 
         when(projectsFacade.createProject(any(CreateProjectRequest.class)))
@@ -74,11 +85,12 @@ class ProjectControllerTest {
         assertThat(result.getBody().getProjectKey()).isNull();
         assertThat(result.getBody().getStatus()).isNull();
         assertThat(result.getBody().getErrorDescription()).isNull();
+        verify(projectRequestValidator).validate(request);
     }
 
     @Test
-    void createProject_whenProjectKeyGenerationException_thenReturnInternalServerError() throws Exception {
-        CreateProjectRequest request = new CreateProjectRequest("My Project");
+    void create_project_returns_internal_server_error_when_project_key_generation_exception_is_thrown() throws Exception {
+        CreateProjectRequest request = new CreateProjectRequest();
 
         when(projectsFacade.createProject(any(CreateProjectRequest.class)))
                 .thenThrow(new ProjectKeyGenerationException("Failed to generate unique project key after 10 retries"));
@@ -93,10 +105,11 @@ class ProjectControllerTest {
         assertThat(result.getBody().getProjectKey()).isNull();
         assertThat(result.getBody().getStatus()).isNull();
         assertThat(result.getBody().getErrorDescription()).isNull();
+        verify(projectRequestValidator).validate(request);
     }
 
     @Test
-    void getProject_whenFound_thenReturnOk() throws Exception {
+    void get_project_returns_ok_when_project_exists() {
         CreateProjectResponse serviceResponse = new CreateProjectResponse();
         serviceResponse.setProjectKey("PROJ01");
         serviceResponse.setStatus("Initiated");
@@ -114,7 +127,7 @@ class ProjectControllerTest {
     }
 
     @Test
-    void getProject_whenNotFound_thenReturnNotFound() throws Exception {
+    void get_project_returns_not_found_when_project_does_not_exist() {
         when(projectsFacade.getProject("UNKNOWN")).thenReturn(null);
 
         ResponseEntity<CreateProjectResponse> result = sut.getProject("UNKNOWN");
@@ -130,7 +143,7 @@ class ProjectControllerTest {
     }
 
     @Test
-    void getProject_whenServiceThrows_thenReturnInternalServerError() throws Exception {
+    void get_project_returns_internal_server_error_when_service_throws_exception() {
         when(projectsFacade.getProject(anyString()))
                 .thenThrow(new RuntimeException("Database error"));
 

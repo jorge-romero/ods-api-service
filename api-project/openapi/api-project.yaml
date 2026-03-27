@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: ODS API Server
   description: API documentation for ODS (Open DevStack) API Service
@@ -124,21 +124,43 @@ components:
         projectKey:
           type: string
           description: Optional project key. If not provided, a unique key will be generated.
-        projectKeyPattern:
-          type: string
-          description: Optional pattern for generating the project key (e.g. 'SS%06d').
+          pattern: "^[A-Z]{2}[A-Z0-9]{1,8}$"
+          minLength: 3
+          maxLength: 10
         projectName:
           type: string
           description: Name of the project.
+          pattern: "^[A-Za-z0-9 ]{0,80}$"
+          maxLength: 80
         projectDescription:
           type: string
           description: Description of the project.
-      required:
-        - projectName
+          maxLength: 255
+        projectFlavor:
+          type: string
+          description: Flavor of the project. Either projectFlavor or configurationItem must be provided.
+        configurationItem:
+          type: string
+          description: Configuration item for the project. Either projectFlavor or configurationItem must be provided.
+        location:
+          type: string
+          description: Location of the project.
+        x2OdsAccount:
+          type: string
+          description: Technical account of the project.
+        owner:
+          type: string
+          description: Owner of the project.
+      oneOf:
+        - required: [projectFlavor]
+        - required: [configurationItem]
+      additionalProperties: false
     CreateProjectResponse:
       type: object
       properties:
         projectKey:
+          type: string
+        httStatus:
           type: string
         status:
           type: string

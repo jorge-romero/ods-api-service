@@ -35,7 +35,7 @@ class ProjectsFacadeImplTest {
 
     @Test
     void createProject_whenServiceReturnsValue_thenMapToApiModel() throws Exception {
-        CreateProjectRequest request = new CreateProjectRequest("My Project");
+        CreateProjectRequest request = new CreateProjectRequest();
         request.setProjectKey("PROJ01");
 
         ProjectResponse serviceResponse =
@@ -58,7 +58,7 @@ class ProjectsFacadeImplTest {
 
     @Test
     void createProject_whenServiceReturnsNull_thenReturnNull() throws Exception {
-        CreateProjectRequest request = new CreateProjectRequest("My Project");
+        CreateProjectRequest request = new CreateProjectRequest();
         when(projectService.createProject(org.mockito.ArgumentMatchers.any(
                 ProjectRequest.class)))
                 .thenReturn(null);

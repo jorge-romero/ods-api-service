@@ -9,6 +9,7 @@ import org.opendevstack.apiservice.project.facade.ProjectsFacade;
 import org.opendevstack.apiservice.project.model.CreateProjectRequest;
 import org.opendevstack.apiservice.project.model.CreateProjectResponse;
 import org.opendevstack.apiservice.project.exception.ProjectKeyGenerationException;
+import org.opendevstack.apiservice.project.validation.ProjectRequestValidator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,9 +31,12 @@ public class ProjectController implements ProjectsApi {
 
     private final ProjectsFacade projectsFacade;
     
+    private final ProjectRequestValidator projectRequestValidator;
+
     @PostMapping
     @Override
     public ResponseEntity<CreateProjectResponse> createProject(@Valid @RequestBody CreateProjectRequest createProjectRequest) {
+        projectRequestValidator.validate(createProjectRequest);
         try {
             return ResponseEntity
                     .status(HttpStatus.OK)
