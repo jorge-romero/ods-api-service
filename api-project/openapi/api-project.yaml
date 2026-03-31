@@ -138,19 +138,21 @@ components:
           maxLength: 255
         projectFlavor:
           type: string
-          description: Flavor of the project. Either projectFlavor or configurationItem must be provided.
+          description: Project flavor. Must be provided if configurationItem is not present. If both projectFlavor and configurationItem are missing, error BAD_REQUEST_FLAVOR_CONFIG_ITEM (023) is returned.
         configurationItem:
           type: string
-          description: Configuration item for the project. Either projectFlavor or configurationItem must be provided.
+          description: Configuration item. Must be present if projectFlavor is not provided. If both projectFlavor and configurationItem are missing, error BAD_REQUEST_FLAVOR_CONFIG_ITEM (023) is returned.
         location:
           type: string
-          description: Location of the project.
+          description: Location of the project. Must be one of the allowed locations. If not in the allowed list, error INVALID_LOCATION (011) is returned.
         x2OdsAccount:
           type: string
           description: Technical account of the project.
+          pattern: "^x2[a-zA-Z0-9]{0,13}$"
         owner:
           type: string
-          description: Owner of the project.
+          description: Owner of the project. If x2OdsAccount is provided but owner is missing, error MANDATORY_OWNER (024) is returned.
+          pattern: "^[a-z]{1,10}$"
       oneOf:
         - required: [projectFlavor]
         - required: [configurationItem]

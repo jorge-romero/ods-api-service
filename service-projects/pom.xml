@@ -69,7 +69,13 @@
             <groupId>org.opendevstack.apiservice</groupId>
             <artifactId>external-service-ocp</artifactId>
             <version>${project.version}</version>
-        </dependency>        
+        </dependency>
+
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>external-service-aap</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.projectlombok</groupId>

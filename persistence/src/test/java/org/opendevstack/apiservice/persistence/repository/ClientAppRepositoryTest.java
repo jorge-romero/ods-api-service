@@ -1,10 +1,5 @@
 package org.opendevstack.apiservice.persistence.repository;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -14,12 +9,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for {@link ClientAppRepository}.
@@ -55,11 +55,11 @@ class ClientAppRepositoryTest {
 	void setUp() {
 		repository.deleteAll();
 
-		enabledClientApp = createClientApp("11111111-1111-1111-1111-111111111111", true);
-		createClientApp("22222222-2222-2222-2222-222222222222", false);
+		enabledClientApp = createClientApp(UUID.fromString("11111111-1111-1111-1111-111111111111"), true);
+		createClientApp(UUID.fromString("22222222-2222-2222-2222-222222222222"), false);
 	}
 
-	private ClientAppEntity createClientApp(String clientId, boolean enabled) {
+	private ClientAppEntity createClientApp(UUID clientId, boolean enabled) {
 		ClientAppEntity clientApp = ClientAppEntity.builder()
 			.clientId(clientId)
 			.clientName(enabled ? "Enabled app" : "Disabled app")
@@ -76,7 +76,7 @@ class ClientAppRepositoryTest {
 		@Test
 		@DisplayName("returns the matching client app")
 		void returnsMatchingClientApp() {
-			Optional<ClientAppEntity> found = repository.findByClientId("11111111-1111-1111-1111-111111111111");
+			Optional<ClientAppEntity> found = repository.findByClientId(UUID.fromString("11111111-1111-1111-1111-111111111111"));
 
 			assertThat(found).isPresent();
 			assertThat(found.get().getClientName()).isEqualTo("Enabled app");
@@ -86,7 +86,7 @@ class ClientAppRepositoryTest {
 		@Test
 		@DisplayName("returns empty for unknown client id")
 		void returnsEmptyForUnknownClientId() {
-			assertThat(repository.findByClientId("99999999-9999-9999-9999-999999999999")).isEmpty();
+			assertThat(repository.findByClientId(UUID.fromString("99999999-9999-9999-9999-999999999999"))).isEmpty();
 		}
 
 	}
@@ -101,7 +101,7 @@ class ClientAppRepositoryTest {
 			List<ClientAppEntity> enabledApps = repository.findByEnabledTrue();
 
 			assertThat(enabledApps).hasSize(1);
-			assertThat(enabledApps.get(0).getClientId()).isEqualTo("11111111-1111-1111-1111-111111111111");
+			assertThat(enabledApps.get(0).getClientId().toString()).isEqualTo("11111111-1111-1111-1111-111111111111");
 		}
 
 	}
@@ -112,13 +112,13 @@ class ClientAppRepositoryTest {
 		@Test
 		@DisplayName("returns true for existing client id")
 		void returnsTrueForExistingClientId() {
-			assertThat(repository.existsByClientId("11111111-1111-1111-1111-111111111111")).isTrue();
+			assertThat(repository.existsByClientId(UUID.fromString("11111111-1111-1111-1111-111111111111"))).isTrue();
 		}
 
 		@Test
 		@DisplayName("returns false for unknown client id")
 		void returnsFalseForUnknownClientId() {
-			assertThat(repository.existsByClientId("99999999-9999-9999-9999-999999999999")).isFalse();
+			assertThat(repository.existsByClientId(UUID.fromString("99999999-9999-9999-9999-999999999999"))).isFalse();
 		}
 
 	}

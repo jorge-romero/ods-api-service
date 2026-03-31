@@ -28,7 +28,10 @@ public enum ErrorKey {
     BAD_REQUEST_FLAVOR_CONFIG_ITEM("023", "Project flavour and config item cannot be both null"),
     MANDATORY_OWNER("024", "Owner must be present if the X2 account is present"),
     PROJECT_ALREADY_EXISTS("025", "Project already exists"),
-    PROJECT_SAME_PROJECT_NAME_ALREADY_EXISTS("026", "Project with same project name already exists");
+    PROJECT_SAME_PROJECT_NAME_ALREADY_EXISTS("026", "Project with same project name already exists"),
+    CLIENT_APP_NOT_REGISTERED("027", "ClientApp not registered, manual registration required"),
+    INVALID_PROJECT_FLAVOR("028", ErrorMessage.BAD_REQUEST),
+    INVALID_CONFIG_ITEM("029", ErrorMessage.BAD_REQUEST);
     
     private String key;
     private String message;

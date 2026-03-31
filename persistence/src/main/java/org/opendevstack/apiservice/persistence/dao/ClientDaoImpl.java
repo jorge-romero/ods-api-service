@@ -6,6 +6,7 @@ import org.opendevstack.apiservice.persistence.repository.ClientAppRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class ClientDaoImpl implements ClientDao {
@@ -18,10 +19,21 @@ public class ClientDaoImpl implements ClientDao {
 
     @Override
     public Optional<ClientInfo> findByClientId(String clientId) {
-        return repository.findByClientId(clientId)
+        if (clientId == null || clientId.isBlank()) {
+            return Optional.empty();
+        }
+
+        final UUID clientUuid;
+        try {
+            clientUuid = UUID.fromString(clientId);
+        } catch (IllegalArgumentException ex) {
+            return Optional.empty();
+        }
+
+        return repository.findByClientId(clientUuid)
                 .map(entity -> new ClientInfo(
                         entity.getId(),
-                        entity.getClientId(),
+                        entity.getClientId().toString(),
                         entity.getClientName(),
                         entity.isEnabled()
                 ));

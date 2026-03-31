@@ -1,8 +1,11 @@
 package org.opendevstack.apiservice.project.controller.advice;
 
 import lombok.extern.slf4j.Slf4j;
+import org.opendevstack.apiservice.externalservice.aap.exception.AutomationPlatformException;
 import org.opendevstack.apiservice.project.controller.ProjectController;
+import org.opendevstack.apiservice.project.exception.ClientAppNotRegisteredException;
 import org.opendevstack.apiservice.project.exception.ErrorKey;
+import org.opendevstack.apiservice.project.exception.ProjectCreationException;
 import org.opendevstack.apiservice.project.exception.ProjectValidationException;
 import org.opendevstack.apiservice.project.model.CreateProjectResponse;
 import org.springframework.http.HttpStatus;
@@ -23,7 +26,9 @@ public class ProjectExceptionHandler {
             "projectName", ErrorKey.PROJECT_NAME_INVALID_FORMAT,
             "projectDescription", ErrorKey.PROJECT_DESCRIPTION_INVALID_FORMAT,
             "projectFlavor", ErrorKey.BAD_REQUEST_FLAVOR_CONFIG_ITEM,
-            "configurationItem", ErrorKey.BAD_REQUEST_FLAVOR_CONFIG_ITEM
+            "configurationItem", ErrorKey.BAD_REQUEST_FLAVOR_CONFIG_ITEM,
+            "x2OdsAccount", ErrorKey.PROJECT_X2ACCOUNT_INVALID_FORMAT,
+            "owner", ErrorKey.PROJECT_OWNER_INVALID_FORMAT
     );
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -55,6 +60,18 @@ public class ProjectExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
 
+    @ExceptionHandler(ClientAppNotRegisteredException.class)
+    public ResponseEntity<CreateProjectResponse> handleClientAppNotRegisteredException(
+            ClientAppNotRegisteredException ex) {
+        log.warn("ClientApp registration error: {}", ex.getMessage());
+        CreateProjectResponse response = new CreateProjectResponse();
+        response.setLocation(ProjectController.API_BASE_PATH);
+        response.setError(HttpStatus.FORBIDDEN.getReasonPhrase());
+        response.setErrorKey(ErrorKey.CLIENT_APP_NOT_REGISTERED.getKey());
+        response.setMessage(ErrorKey.CLIENT_APP_NOT_REGISTERED.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
     @ExceptionHandler(ProjectValidationException.class)
     public ResponseEntity<CreateProjectResponse> handleValidationException(ProjectValidationException ex) {
         log.warn("Validation error: {}", ex.getMessage());
@@ -65,6 +82,41 @@ public class ProjectExceptionHandler {
         response.setErrorKey(errorKey.getKey());
         response.setMessage(errorKey.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(ProjectCreationException.class)
+    public ResponseEntity<CreateProjectResponse> handleProjectCreationException(
+            ProjectCreationException ex) {
+        log.error("Project creation error: {}", ex.getMessage(), ex);
+        CreateProjectResponse response = new CreateProjectResponse();
+        response.setLocation(ProjectController.API_BASE_PATH);
+        response.setError(ErrorKey.INTERNAL_ERROR.getMessage());
+        response.setErrorKey(ErrorKey.INTERNAL_ERROR.getKey());
+        response.setMessage(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    @ExceptionHandler(AutomationPlatformException.class)
+    public ResponseEntity<CreateProjectResponse> handleAutomationPlatformException(
+            AutomationPlatformException ex) {
+        log.error("Failed to execute automated job: {}", ex.getMessage(), ex);
+        CreateProjectResponse response = new CreateProjectResponse();
+        response.setLocation(ProjectController.API_BASE_PATH);
+        response.setError(ErrorKey.INTERNAL_ERROR.getMessage());
+        response.setErrorKey(ErrorKey.INTERNAL_ERROR.getKey());
+        response.setMessage(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<CreateProjectResponse> handleGenericException(Exception ex) {
+        log.error("Unexpected error: {}", ex.getMessage(), ex);
+        CreateProjectResponse response = new CreateProjectResponse();
+        response.setLocation(ProjectController.API_BASE_PATH);
+        response.setError(ErrorKey.INTERNAL_ERROR.getMessage());
+        response.setErrorKey(ErrorKey.INTERNAL_ERROR.getKey());
+        response.setMessage("An error occurred while processing the request.");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }
 

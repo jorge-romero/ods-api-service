@@ -19,7 +19,7 @@ public interface ClientAppRepository extends JpaRepository<ClientAppEntity, UUID
 	 * @param clientId Azure AD application/client UUID
 	 * @return matching client app, if present
 	 */
-	Optional<ClientAppEntity> findByClientId(String clientId);
+	Optional<ClientAppEntity> findByClientId(UUID clientId);
 
 	/**
 	 * Returns all enabled client applications.
@@ -32,7 +32,7 @@ public interface ClientAppRepository extends JpaRepository<ClientAppEntity, UUID
 	 * @param clientId Azure AD application/client UUID
 	 * @return {@code true} if the client app exists
 	 */
-	boolean existsByClientId(String clientId);
+	boolean existsByClientId(UUID clientId);
 
 	/**
 	 * Loads a client application together with its project flavor configuration.
@@ -40,6 +40,6 @@ public interface ClientAppRepository extends JpaRepository<ClientAppEntity, UUID
 	 * @return client app with project flavors initialized, if present
 	 */
 	@EntityGraph(attributePaths = "projectFlavors")
-	Optional<ClientAppEntity> findDetailedByClientId(String clientId);
+	Optional<ClientAppEntity> findDetailedByClientId(UUID clientId);
 
 }

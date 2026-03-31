@@ -5,7 +5,7 @@ import org.opendevstack.apiservice.serviceproject.model.ProjectResponse;
 
 public interface ProjectService {
 
-    ProjectResponse createProject(ProjectRequest request);
+    ProjectResponse saveProject(ProjectRequest request);
 
     ProjectResponse getProject(String projectKey);
 }

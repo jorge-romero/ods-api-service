@@ -12,6 +12,7 @@ import org.opendevstack.apiservice.serviceproject.model.Status;
 public interface ProjectResponseMapper {
 
     @Mapping(source = "status", target = "status", qualifiedByName = "mapStatus")
+    @Mapping(source = "id", target = "projectId")
     ProjectResponse toCreateProjectResponse(ProjectEntity entity);
 
     @Named("mapStatus")

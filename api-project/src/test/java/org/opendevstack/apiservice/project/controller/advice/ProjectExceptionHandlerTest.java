@@ -7,8 +7,11 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.MockitoAnnotations;
+import org.opendevstack.apiservice.externalservice.aap.exception.AutomationPlatformException;
 import org.opendevstack.apiservice.project.controller.ProjectController;
+import org.opendevstack.apiservice.project.exception.ClientAppNotRegisteredException;
 import org.opendevstack.apiservice.project.exception.ErrorKey;
+import org.opendevstack.apiservice.project.exception.ProjectCreationException;
 import org.opendevstack.apiservice.project.exception.ProjectValidationException;
 import org.opendevstack.apiservice.project.model.CreateProjectRequest;
 import org.opendevstack.apiservice.project.model.CreateProjectResponse;
@@ -22,9 +25,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class ProjectExceptionHandlerTest {
 
@@ -197,6 +200,71 @@ class ProjectExceptionHandlerTest {
                         "Bad Request"
                 )
         );
-    }    
-}
+    }
 
+    @Test
+    void handle_project_creation_exception_returns_conflict() {
+        ProjectCreationException exception = new ProjectCreationException("error message");
+
+        ResponseEntity<CreateProjectResponse> result = sut.handleProjectCreationException(exception);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, result.getStatusCode());
+        assertNotNull(result.getBody());
+        assertEquals(ProjectController.API_BASE_PATH, result.getBody().getLocation());
+        assertEquals("Internal error", result.getBody().getError());
+        assertEquals("003", result.getBody().getErrorKey());
+        assertEquals("error message", result.getBody().getMessage());
+        assertNull(result.getBody().getProjectKey());
+        assertNull(result.getBody().getStatus());
+        assertNull(result.getBody().getErrorDescription());
+    }
+
+    @Test
+    void handle_client_app_not_registered_exception_returns_forbidden() {
+        ClientAppNotRegisteredException exception = new ClientAppNotRegisteredException("client-123");
+
+        ResponseEntity<CreateProjectResponse> result = sut.handleClientAppNotRegisteredException(exception);
+
+        assertEquals(HttpStatus.FORBIDDEN, result.getStatusCode());
+        assertNotNull(result.getBody());
+        assertEquals(ProjectController.API_BASE_PATH, result.getBody().getLocation());
+        assertEquals(HttpStatus.FORBIDDEN.getReasonPhrase(), result.getBody().getError());
+        assertEquals("027", result.getBody().getErrorKey());
+        assertEquals("ClientApp not registered, manual registration required", result.getBody().getMessage());
+        assertNull(result.getBody().getProjectKey());
+        assertNull(result.getBody().getStatus());
+    }
+
+    @Test
+    void handle_automation_platform_exception_returns_internal_server_error() {
+        AutomationPlatformException exception = new AutomationPlatformException("AAP job failed");
+
+        ResponseEntity<CreateProjectResponse> result = sut.handleAutomationPlatformException(exception);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, result.getStatusCode());
+        assertNotNull(result.getBody());
+        assertEquals(ProjectController.API_BASE_PATH, result.getBody().getLocation());
+        assertEquals("Internal error", result.getBody().getError());
+        assertEquals("003", result.getBody().getErrorKey());
+        assertEquals("AAP job failed", result.getBody().getMessage());
+        assertNull(result.getBody().getProjectKey());
+        assertNull(result.getBody().getStatus());
+    }
+
+    @Test
+    void handle_generic_exception_returns_internal_server_error() {
+        RuntimeException exception = new RuntimeException("Database error");
+
+        ResponseEntity<CreateProjectResponse> result = sut.handleGenericException(exception);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, result.getStatusCode());
+        assertNotNull(result.getBody());
+        assertEquals(ProjectController.API_BASE_PATH, result.getBody().getLocation());
+        assertEquals("Internal error", result.getBody().getError());
+        assertEquals("003", result.getBody().getErrorKey());
+        assertEquals("An error occurred while processing the request.", result.getBody().getMessage());
+        assertNull(result.getBody().getProjectKey());
+        assertNull(result.getBody().getStatus());
+        assertNull(result.getBody().getErrorDescription());
+    }
+}

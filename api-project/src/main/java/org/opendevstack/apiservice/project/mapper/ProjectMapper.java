@@ -3,6 +3,7 @@ package org.opendevstack.apiservice.project.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
+import org.opendevstack.apiservice.project.facade.impl.ProjectCreationCommand;
 import org.opendevstack.apiservice.project.model.CreateProjectRequest;
 import org.opendevstack.apiservice.project.model.CreateProjectResponse;
 import org.opendevstack.apiservice.serviceproject.model.ProjectRequest;
@@ -15,6 +16,8 @@ import java.text.MessageFormat;
 public interface ProjectMapper {
 
     ProjectRequest toServiceRequest(CreateProjectRequest apiRequest);
+
+    ProjectRequest toServiceRequest(ProjectCreationCommand command);
 
     @Mapping(source = "status", target = "status", qualifiedByName = "mapStatus")
     @Mapping(source = "projectKey", target = "location", qualifiedByName = "mapLocation")

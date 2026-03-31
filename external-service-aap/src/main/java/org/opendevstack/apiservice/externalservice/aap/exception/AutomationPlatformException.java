@@ -3,7 +3,7 @@ package org.opendevstack.apiservice.externalservice.aap.exception;
 /**
  * Exception thrown when there are issues with automation platform operations.
  */
-public class AutomationPlatformException extends Exception {
+public class AutomationPlatformException extends RuntimeException {
 
     private final String errorCode;
 

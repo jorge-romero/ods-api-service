@@ -39,6 +39,14 @@ public final class ProjectResponseFactory {
                 location);
     }
 
+    public static CreateProjectResponse internalError(String location, String message) {
+        return error(
+                ErrorKey.INTERNAL_ERROR.getMessage(),
+                ErrorKey.INTERNAL_ERROR.getKey(),
+                message,
+                location);
+    }    
+
     private static CreateProjectResponse error(String error, String errorKey, String message, String location) {
         CreateProjectResponse response = new CreateProjectResponse();
         response.setError(error);
