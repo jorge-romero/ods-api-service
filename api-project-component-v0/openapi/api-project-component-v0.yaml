@@ -12,14 +12,14 @@ servers:
         default: localhost:8080
         description: Development environment
 tags:
-  - name: ProjectComponents
+  - name: Project Components
     description: API for managing project components
 
 paths:
   /projects/{projectId}/components/:
     post:
       tags:
-        - projectComponents
+        - Project Components
       summary: Create a component in a project
       operationId: createProjectComponent
       description: Retrieves information about a specific component
@@ -61,7 +61,7 @@ paths:
   /projects/{projectId}/components/{componentId}:
     get:
       tags:
-        - projectComponents
+        - Project Components
       summary: Get component information
       operationId: getProjectComponent
       description: Retrieves information about a specific component

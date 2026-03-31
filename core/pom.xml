@@ -111,6 +111,12 @@
 
         <dependency>
             <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>external-service-marketplace</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
             <artifactId>api-project-users</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -118,6 +124,12 @@
         <dependency>
             <groupId>org.opendevstack.apiservice</groupId>
             <artifactId>api-project</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>api-project-component-v0</artifactId>
             <version>${project.version}</version>
         </dependency>
 

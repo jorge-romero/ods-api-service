@@ -45,6 +45,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>external-service-marketplace</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>0.12.3</version>
@@ -89,6 +95,7 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-core</artifactId>

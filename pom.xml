@@ -54,6 +54,7 @@
         <module>external-service-ocp</module>
         <module>external-service-bitbucket</module>
         <module>external-service-jira</module>
+        <module>external-service-marketplace</module>
         <module>external-service-webhookproxy</module>
         <module>service-projects</module>
         <module>api-project-users</module>

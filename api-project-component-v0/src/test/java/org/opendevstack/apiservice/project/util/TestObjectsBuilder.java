@@ -1,9 +1,14 @@
 package org.opendevstack.apiservice.project.util;
 
+import org.opendevstack.apiservice.externalservice.marketplace.model.CreateComponentParameter;
+import org.opendevstack.apiservice.externalservice.marketplace.model.ProjectComponent;
 import org.opendevstack.apiservice.project.model.Component;
 import org.opendevstack.apiservice.project.model.CreateComponentRequest;
 import org.opendevstack.apiservice.project.model.CreateComponentResponse;
 import org.springframework.http.HttpStatus;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestObjectsBuilder {
 
@@ -19,6 +24,14 @@ public class TestObjectsBuilder {
         return component;
     }
 
+    public static ProjectComponent buildTestMarketplaceComponent() {
+        ProjectComponent component = new ProjectComponent();
+        component.setComponentId("testComponentId");
+        component.setCanBeDeleted(false);
+        component.setComponentUrl("http://test.component.url");
+        return component;
+    }
+
     public static CreateComponentRequest buildTestCreateComponentRequest() {
         CreateComponentRequest request = new CreateComponentRequest();
         request.setName("testComponentName");
@@ -26,10 +39,17 @@ public class TestObjectsBuilder {
         return request;
     }
 
-    public static CreateComponentResponse buildTestCreateComponentResponseSuccess(String componentName, String projectId) {
+    public static List<CreateComponentParameter> buildTestMarketplaceCreateComponentParameters() {
+        List<CreateComponentParameter> parameters = new ArrayList<>();
+        parameters.add(new CreateComponentParameter("name", "string", "testComponentName"));
+        parameters.add(new CreateComponentParameter("productId", "string", "testProductId"));
+        return parameters;
+    }
+
+    public static CreateComponentResponse buildTestCreateComponentResponseSuccess(String componentId, String projectId) {
         CreateComponentResponse response = new CreateComponentResponse();
         response.setErrorCode(HttpStatus.CREATED.value());
-        response.setMessage(componentName + " component created successfully in project " + projectId);
+        response.setMessage(componentId + " component created successfully in project " + projectId);
         return response;
     }
 

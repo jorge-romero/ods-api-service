@@ -40,7 +40,7 @@ class ProjectComponentsControllerTest {
         Component testComponent = buildTestComponent();
         String testProjectId = "testProjectId";
         CreateComponentRequest testCreateComponentRequest = buildTestCreateComponentRequest();
-        CreateComponentResponse testServiceResponseSuccess = buildTestCreateComponentResponseSuccess(testComponent.getName(),
+        CreateComponentResponse testServiceResponseSuccess = buildTestCreateComponentResponseSuccess(testComponent.getId(),
                 testProjectId);
 
         when(componentsFacade.createProjectComponent(anyString(), any(CreateComponentRequest.class)))
