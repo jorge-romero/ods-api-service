@@ -7,6 +7,7 @@ import org.opendevstack.apiservice.project.api.ProjectsApi;
 import org.opendevstack.apiservice.project.facade.ProjectsFacade;
 import org.opendevstack.apiservice.project.model.CreateProjectRequest;
 import org.opendevstack.apiservice.project.model.CreateProjectResponse;
+import org.opendevstack.apiservice.project.util.SecurityUtils;
 import org.opendevstack.apiservice.project.validation.ProjectRequestValidator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,7 +38,8 @@ public class ProjectController implements ProjectsApi {
     @Override
     public ResponseEntity<CreateProjectResponse> createProject(@Valid @RequestBody CreateProjectRequest createProjectRequest) {
         projectRequestValidator.validate(createProjectRequest);
-        UUID clientId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        UUID clientId = SecurityUtils.getClientId();
+
         CreateProjectResponse projectResponse = projectsFacade.createProject(createProjectRequest, clientId);
         projectResponse.setLocation(API_BASE_PATH + "/" + projectResponse.getProjectKey());
         return ResponseEntity
@@ -45,7 +47,7 @@ public class ProjectController implements ProjectsApi {
                 .header(HTTP_HEADER_LOCATION, API_BASE_PATH)
                 .body(projectResponse);
     }
-    
+
     @GetMapping("/{projectKey}")
     @Override
     public ResponseEntity<CreateProjectResponse> getProject(@PathVariable String projectKey) {

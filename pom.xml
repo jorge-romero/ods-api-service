@@ -48,6 +48,7 @@
         <module>persistence</module>
         <module>core</module>
         <module>core-contracts</module>
+        <module>core-security</module>
         <module>external-service-aap</module>
         <module>external-service-projects-info-service</module>
         <module>external-service-uipath</module>

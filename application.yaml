@@ -40,6 +40,19 @@ spring:
     open-in-view: false
     show-sql: false
 
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://sts.windows.net/${AZURE_TENANT_ID}/
+
+app:
+  security:
+    public-endpoints:
+      - /actuator/health
+      - /actuator/health/**
+
 management:
   endpoints:
     web:

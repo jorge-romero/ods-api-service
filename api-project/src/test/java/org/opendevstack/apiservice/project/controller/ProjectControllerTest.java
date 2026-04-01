@@ -11,13 +11,16 @@ import org.opendevstack.apiservice.project.model.CreateProjectResponse;
 import org.opendevstack.apiservice.project.validation.ProjectRequestValidator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import java.util.UUID;
 
 class ProjectControllerTest {
 
@@ -34,6 +37,14 @@ class ProjectControllerTest {
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
         sut = new ProjectController(projectsFacade, projectRequestValidator);
+
+        Jwt jwtToken = Jwt.withTokenValue("dummy-token")
+                .claim("appid", UUID.randomUUID().toString())
+                .claim("sub", "test-user")
+                .header("alg", "none")
+                .build();
+        JwtAuthenticationToken authentication = new JwtAuthenticationToken(jwtToken);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
     @AfterEach

@@ -9,6 +9,7 @@ public final class PolicyTypes {
 
     private PolicyTypes() {}
 
+    public static final String FLAVOR_RESTRICTION = "FLAVOR_RESTRICTION";
     public static final String ALLOWED_CLIENTS = "ALLOWED_CLIENTS";
     public static final String SCOPE_REQUIRED = "SCOPE_REQUIRED";
 }

@@ -1,0 +1,547 @@
+### ===========================================================================
+### core-security — Security Test Matrix (HTTP Client)
+### Reference: doc/core-security/tests.md
+### ===========================================================================
+###
+### SETUP — create a .env file at project root:
+###
+###   AZURE_TENANT_ID=<tenant-id>
+###   AZURE_CLIENT_ID=<client-id-allowed>          # app in ALLOWED_CLIENTS policy
+###   AZURE_CLIENT_SECRET=<secret-for-above>
+###   AZURE_CLIENT_ID_OTHER=<client-id-disallowed> # app NOT in ALLOWED_CLIENTS policy
+###   AZURE_CLIENT_SECRET_OTHER=<secret-for-above>
+###   AZURE_SCOPE=<api-audience-app-id>             # e.g. 5dcea642-a10e-4bc8-9e7e-f758d28def0a
+###
+### OBO TOKENS — cannot be obtained automatically (require browser/user login).
+###   Obtain via MSAL device-code or auth-code flow:
+###     scope: api://<AZURE_SCOPE>/user_impersonation
+###   Paste the access_token into @obo_token and @obo_token_wrong_scope below.
+###
+### FEASIBILITY KEY
+###   ✅ Fully automated  — token is retrieved via client_credentials grant
+###   ⚠ Partially manual — OBO token must be pasted in @obo_token
+###   🔧 Config required  — needs specific DB api_definition or policy setup
+### ===========================================================================
+
+@host = http://localhost:8080
+
+### ── Azure AD – client credentials (ALLOWED client) ──────────────────────────
+@azure_tenant_id     = {{$dotenv AZURE_TENANT_ID}}
+@azure_client_id     = {{$dotenv AZURE_CLIENT_ID}}
+@azure_client_secret = {{$dotenv AZURE_CLIENT_SECRET}}
+@azure_scope         = api://{{$dotenv AZURE_SCOPE}}/.default
+
+### ── Azure AD – client credentials (DISALLOWED client) ───────────────────────
+@azure_client_id_other     = {{$dotenv AZURE_CLIENT_ID_OTHER}}
+@azure_client_secret_other = {{$dotenv AZURE_CLIENT_SECRET_OTHER}}
+
+### ── Test data ────────────────────────────────────────────────────────────────
+@project_key = {{$dotenv PROJECT_KEY}}
+@user_id     = {{$dotenv USER_ID}}
+
+### ── Bad tokens (static, for error-case tests) ──────────────────────────────
+### S-00-04: malformed — not a valid JWT structure at all
+@malformed_token = not.a.valid.jwt.token
+
+### S-00-05: expired — well-formed JWT but exp=2020-01-01, signature is invalid →
+###          BearerTokenAuthenticationFilter returns 401 before any policy runs
+@expired_token = {{$dotenv EXPIRED_TOKEN}}
+
+### ── OBO tokens (MANUAL — paste after browser / MSAL device-code login) ──────
+### Required for: §4 all OBO tests, P-03, flow-enforcement cross-flow tests
+@obo_token = {{$dotenv OBO_TOKEN}}
+
+### OBO token from a client NOT in ALLOWED_CLIENTS (different azp claim)
+### Required for: OBO-P-02, OBO-M-03
+    @obo_token_other_client = {{$dotenv OBO_TOKEN_OTHER_CLIENT}}
+
+### OBO token whose scp does NOT include the required scope
+### Required for: OBO-S-02, OBO-M-02
+@obo_token_wrong_scope = {{$dotenv OBO_TOKEN_WRONG_SCOPE}}
+
+
+### ===========================================================================
+### TOKEN ACQUISITION — automated via client_credentials grant
+### ===========================================================================
+
+### ── Allowed client ──────────────────────────────────────────────────────────
+# @name getToken
+POST https://login.microsoftonline.com/{{azure_tenant_id}}/oauth2/v2.0/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+&client_id={{azure_client_id}}
+&client_secret={{azure_client_secret}}
+&scope={{azure_scope}}
+
+###
+
+@cc_token = {{getToken.response.body.access_token}}
+
+### ── Disallowed client ───────────────────────────────────────────────────────
+# @name getTokenOther
+POST https://login.microsoftonline.com/{{azure_tenant_id}}/oauth2/v2.0/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+&client_id={{azure_client_id_other}}
+&client_secret={{azure_client_secret_other}}
+&scope={{azure_scope}}
+
+###
+
+@cc_token_other = {{getTokenOther.response.body.access_token}}
+
+
+### ===========================================================================
+### §1  PUBLIC API
+### Endpoint: GET /actuator/health  (configured via app.security.public-endpoints)
+### All cases → 200 — Spring Security permitAll() bypasses JWT validation entirely
+### ===========================================================================
+
+### P-01 ✅ · No token → 200
+GET {{host}}/actuator/health
+Accept: application/json
+
+###
+
+### P-02 ✅ · Valid CC token → 200 (token accepted but not required)
+GET {{host}}/actuator/health
+Accept: application/json
+Authorization: Bearer {{cc_token}}
+
+###
+
+### P-03 ⚠ · Valid OBO token → 200 (token accepted but not required)
+GET {{host}}/actuator/health
+Accept: application/json
+Authorization: Bearer {{obo_token}}
+
+###
+
+### P-04a ✅ · Malformed token → 401 (permitAll short-circuits before JWT validation)
+GET {{host}}/actuator/health
+Accept: application/json
+Authorization: Bearer {{malformed_token}}
+
+###
+
+### P-04b ✅ · Expired token → 401 (permitAll short-circuits before JWT validation)
+GET {{host}}/actuator/health
+Accept: application/json
+Authorization: Bearer {{expired_token}}
+
+###
+
+
+### ===========================================================================
+### §2  SECURED API — NO TOKEN
+### Endpoint: GET /api/pub/v0/projects/{key}  (CLIENT_CREDENTIALS, not public)
+### Expected: 401 — BearerTokenAuthenticationFilter rejects before policy runs
+### ===========================================================================
+
+### S-00-01 ✅ · CLIENT_CREDENTIALS endpoint, no token → 401
+GET {{host}}/api/pub/v0/projects/{{project_key}}
+Accept: application/json
+
+###
+
+### S-00-02 ✅ · OBO-typed endpoint (project-users-v1), no token → 401
+GET {{host}}/api/v1/projects/{{project_key}}/users/{{user_id}}/status
+Accept: application/json
+
+###
+
+### S-00-03 ✅ · Multiple-auth-types endpoint, no token → 401
+###            (use any secured endpoint; both CC and OBO require a bearer token)
+GET {{host}}/api/pub/v0/projects/{{project_key}}
+Accept: application/json
+
+###
+
+### S-00-04 ✅ · Malformed JWT → 401
+GET {{host}}/api/pub/v0/projects/{{project_key}}
+Accept: application/json
+Authorization: Bearer {{malformed_token}}
+
+###
+
+### S-00-05 ✅ · Expired JWT → 401
+GET {{host}}/api/pub/v0/projects/{{project_key}}
+Accept: application/json
+Authorization: Bearer {{expired_token}}
+
+###
+
+
+### ===========================================================================
+### §3  CLIENT_CREDENTIALS FLOW
+### ===========================================================================
+
+### ── §3.1  Flow enforcement (AuthTypeEnforcementFilter) ─────────────────────
+###
+###  Note: flow enforcement at the filter level requires an upstream component
+###  to set the API_DEFINITION_ATTR request attribute. Without that, flow type
+###  is enforced implicitly via policy rules (ALLOWED_CLIENTS / SCOPE_REQUIRED).
+###  Tests CC-F-02 and CC-F-04 therefore depend on DB policy configuration.
+
+### CC-F-01 ✅ · CC endpoint + CC token → passes filter (200 or policy result)
+GET {{host}}/api/pub/v0/projects/{{project_key}}
+Accept: application/json
+Authorization: Bearer {{cc_token}}
+
+###
+
+### CC-F-02 🔧 · OBO-only endpoint + CC token → 403 (wrong flow)
+###   Requires: api_definition with auth_types = ['OBO'] in DB
+###   As currently seeded: project-users-v1 uses CLIENT_CREDENTIALS, so a CC
+###   token here may pass flow but fail ALLOWED_CLIENTS policy.
+POST {{host}}/api/v1/projects/{{project_key}}/users
+Content-Type: application/json
+Authorization: Bearer {{cc_token}}
+
+{
+  "environment": "PRODUCTIVE",
+  "user": "{{user_id}}",
+  "account": "{{user_id}}",
+  "role": "TEAM",
+  "comments": "CC-F-02: CC token on OBO-only endpoint — expected 403"
+}
+
+###
+
+### CC-F-03 ✅ · Both-flows endpoint + CC token → passes filter
+GET {{host}}/api/pub/v0/projects/{{project_key}}
+Accept: application/json
+Authorization: Bearer {{cc_token}}
+
+###
+
+### CC-F-04 🔧 · No-auth endpoint (AuthType.NONE) + CC token → passes (token ignored)
+###   Seeded: project-platforms-v1 has auth_types=['NONE'] — requiresAuth()=false
+###   Note: PolicyAuthorizationManager will still run; result depends on policy rules.
+GET {{host}}/api/v1/projects/{{project_key}}/platforms
+Accept: application/json
+Authorization: Bearer {{cc_token}}
+
+###
+
+### ── §3.2  Policy — ALLOWED_CLIENTS ─────────────────────────────────────────
+
+### CC-P-01 ✅ · Allowed client (azp in ALLOWED_CLIENTS policy) → 200 / PERMIT
+GET {{host}}/api/pub/v0/projects/{{project_key}}
+Accept: application/json
+Authorization: Bearer {{cc_token}}
+
+###
+
+### CC-P-02 ✅ · Disallowed client (azp NOT in ALLOWED_CLIENTS) → 403
+GET {{host}}/api/pub/v0/projects/{{project_key}}
+Accept: application/json
+Authorization: Bearer {{cc_token_other}}
+
+###
+
+### CC-P-03 🔧 · No policy rules configured for this API → ABSTAIN → 200
+###   Requires: api_definition with zero rows in authorization_policies table
+###   Adjust path to an endpoint whose api_definition has no policy rows.
+GET {{host}}/api/pub/v0/projects/{{project_key}}/components/anything
+Authorization: Bearer {{cc_token}}
+
+###
+
+### CC-P-04 🔧 · Empty rules list → PolicyEngine.evaluate([]) → DENY → 403
+###   Same condition as CC-P-03: covered by unit test PolicyEngineTest.evaluate_emptyRules_returnsDeny
+###   Integration path: any secured endpoint with zero policy rows in DB.
+
+###
+
+### ── §3.3  Policy — SCOPE_REQUIRED ──────────────────────────────────────────
+
+### CC-S-01 ✅ · CC token (no scp claim) against SCOPE_REQUIRED policy → 403
+###   A standard CC token has roles[] but no scp claim.
+###   If the api_definition has SCOPE_REQUIRED policy, evaluator returns DENY.
+GET {{host}}/api/pub/v0/projects/{{project_key}}
+Accept: application/json
+Authorization: Bearer {{cc_token}}
+
+###
+
+### CC-S-02 🔧 · CC token WITH scp + SCOPE_REQUIRED matching scope → 200
+###   Non-standard scenario: requires either a custom CC token with scp, or
+###   a resource server that issues CC tokens with delegated scopes.
+###   Best validated via SecurityIntegrationTest.ccToken_scopeRequired_withScp_returns200.
+
+###
+
+### ── §3.4  Multiple rules (ALLOWED_CLIENTS + SCOPE_REQUIRED) ─────────────────
+
+### CC-M-01 ✅ · Allowed client + required scope present → 200
+###   Standard CC token from allowed client; if SCOPE_REQUIRED is active,
+###   add scp manually (see CC-S-02 note). Without SCOPE_REQUIRED policy, passes via ALLOWED_CLIENTS.
+POST {{host}}/api/pub/v0/projects
+Content-Type: application/json
+Authorization: Bearer {{cc_token}}
+
+{
+  "projectName": "Security Test CC-M-01",
+  "projectKey": "{{project_key}}-m01",
+  "flavor": "DLSS",
+  "projectDescription": "CC-M-01: allowed client + scope — expected 200"
+}
+
+###
+
+### CC-M-02 ✅ · Allowed client + scope missing → 403
+###   CC token has no scp; if SCOPE_REQUIRED policy is active → DENY
+POST {{host}}/api/pub/v0/projects
+Content-Type: application/json
+Authorization: Bearer {{cc_token}}
+
+{
+  "projectName": "Security Test CC-M-02",
+  "projectKey": "{{project_key}}-m02",
+  "flavor": "DLSS",
+  "projectDescription": "CC-M-02: scope missing — expected 403 if SCOPE_REQUIRED is active"
+}
+
+###
+
+### CC-M-03 ✅ · Disallowed client + scope present → 403
+POST {{host}}/api/pub/v0/projects
+Content-Type: application/json
+Authorization: Bearer {{cc_token_other}}
+
+{
+  "projectName": "Security Test CC-M-03",
+  "projectKey": "{{project_key}}-m03",
+  "flavor": "DLSS",
+  "projectDescription": "CC-M-03: disallowed client — expected 403"
+}
+
+###
+
+### CC-M-04 ✅ · Disallowed client + scope missing → 403
+POST {{host}}/api/pub/v0/projects
+Content-Type: application/json
+Authorization: Bearer {{cc_token_other}}
+
+{
+  "projectName": "Security Test CC-M-04",
+  "projectKey": "{{project_key}}-m04",
+  "flavor": "DLSS",
+  "projectDescription": "CC-M-04: disallowed client + no scope — expected 403"
+}
+
+###
+
+
+### ===========================================================================
+### §4  OBO FLOW (On-Behalf-Of / delegated)
+### ⚠ ALL TESTS BELOW require @obo_token (and variants) to be set manually.
+###   See SETUP INSTRUCTIONS at the top of this file.
+### ===========================================================================
+
+### ── §4.1  Flow enforcement ───────────────────────────────────────────────────
+
+### OBO-F-01 ⚠ · OBO-only endpoint + OBO token → passes (200 or policy result)
+POST {{host}}/api/v1/projects/{{project_key}}/users
+Content-Type: application/json
+Authorization: Bearer {{obo_token}}
+
+{
+  "environment": "PRODUCTIVE",
+  "user": "{{user_id}}",
+  "account": "{{user_id}}",
+  "role": "TEAM",
+  "comments": "OBO-F-01: correct OBO flow"
+}
+
+###
+
+### OBO-F-02 ✅ · OBO-configured endpoint + CC token → 403 (wrong flow)
+###   CC token sent to project-users endpoint; if ALLOWED_CLIENTS policy is active
+###   and cc_token_other's azp is not in the allowed list → 403.
+###   To test pure flow enforcement, configure auth_types=['OBO'] for this api_definition.
+POST {{host}}/api/v1/projects/{{project_key}}/users
+Content-Type: application/json
+Authorization: Bearer {{cc_token_other}}
+
+{
+  "environment": "PRODUCTIVE",
+  "user": "{{user_id}}",
+  "account": "{{user_id}}",
+  "role": "TEAM",
+  "comments": "OBO-F-02: CC token on OBO endpoint — expected 403"
+}
+
+###
+
+### OBO-F-03 ⚠ · Both-flows endpoint + OBO token → passes
+GET {{host}}/api/pub/v0/projects/{{project_key}}
+Accept: application/json
+Authorization: Bearer {{obo_token}}
+
+###
+
+### ── §4.2  Policy — ALLOWED_CLIENTS ──────────────────────────────────────────
+
+### OBO-P-01 ⚠ · Allowed client OBO token (azp in ALLOWED_CLIENTS) → 200
+POST {{host}}/api/v1/projects/{{project_key}}/users
+Content-Type: application/json
+Authorization: Bearer {{obo_token}}
+
+{
+  "environment": "PRODUCTIVE",
+  "user": "{{user_id}}",
+  "account": "{{user_id}}",
+  "role": "TEAM",
+  "comments": "OBO-P-01: allowed SPA client"
+}
+
+###
+
+### OBO-P-02 ⚠ · Disallowed client OBO token → 403
+POST {{host}}/api/v1/projects/{{project_key}}/users
+Content-Type: application/json
+Authorization: Bearer {{obo_token_other_client}}
+
+{
+  "environment": "PRODUCTIVE",
+  "user": "{{user_id}}",
+  "account": "{{user_id}}",
+  "role": "TEAM",
+  "comments": "OBO-P-02: disallowed client — expected 403"
+}
+
+###
+
+### OBO-P-03 🔧 · No policy rules for OBO api_definition → ABSTAIN → 200
+###   Requires: api_definition entry with zero authorization_policies rows in DB
+
+###
+
+### ── §4.3  Policy — SCOPE_REQUIRED ───────────────────────────────────────────
+
+### OBO-S-01 ⚠ · scp contains required scope → 200
+POST {{host}}/api/v1/projects/{{project_key}}/users
+Content-Type: application/json
+Authorization: Bearer {{obo_token}}
+
+{
+  "environment": "PRODUCTIVE",
+  "user": "{{user_id}}",
+  "account": "{{user_id}}",
+  "role": "TEAM",
+  "comments": "OBO-S-01: scp has required scope"
+}
+
+###
+
+### OBO-S-02 ⚠ · scp does NOT contain required scope → 403
+POST {{host}}/api/v1/projects/{{project_key}}/users
+Content-Type: application/json
+Authorization: Bearer {{obo_token_wrong_scope}}
+
+{
+  "environment": "PRODUCTIVE",
+  "user": "{{user_id}}",
+  "account": "{{user_id}}",
+  "role": "TEAM",
+  "comments": "OBO-S-02: scp missing required scope — expected 403"
+}
+
+###
+
+### OBO-S-03 · Blank scp claim → AuthFlowResolver treats as CLIENT_CREDENTIALS
+###   Cannot be crafted easily in .http client (requires custom JWT with scp="   ").
+###   Covered by: SecurityIntegrationTest › OboTests › blankScp_returns403
+
+###
+
+### ── §4.4  Multiple rules ──────────────────────────────────────────────────────
+
+### OBO-M-01 ⚠ · Allowed client + required scope → 200
+POST {{host}}/api/v1/projects/{{project_key}}/users
+Content-Type: application/json
+Authorization: Bearer {{obo_token}}
+
+{
+  "environment": "PRODUCTIVE",
+  "user": "{{user_id}}",
+  "account": "{{user_id}}",
+  "role": "TEAM",
+  "comments": "OBO-M-01: both PERMIT"
+}
+
+###
+
+### OBO-M-02 ⚠ · Allowed client + scope missing → 403
+POST {{host}}/api/v1/projects/{{project_key}}/users
+Content-Type: application/json
+Authorization: Bearer {{obo_token_wrong_scope}}
+
+{
+  "environment": "PRODUCTIVE",
+  "user": "{{user_id}}",
+  "account": "{{user_id}}",
+  "role": "TEAM",
+  "comments": "OBO-M-02: PERMIT + DENY — expected 403"
+}
+
+###
+
+### OBO-M-03 ⚠ · Disallowed client + scope present → 403
+POST {{host}}/api/v1/projects/{{project_key}}/users
+Content-Type: application/json
+Authorization: Bearer {{obo_token_other_client}}
+
+{
+  "environment": "PRODUCTIVE",
+  "user": "{{user_id}}",
+  "account": "{{user_id}}",
+  "role": "TEAM",
+  "comments": "OBO-M-03: DENY + PERMIT — expected 403"
+}
+
+###
+
+
+### ===========================================================================
+### §5  UNKNOWN ROUTE (no matching api_definition)
+### PolicyAuthorizationManager.check() → resolver returns empty → fail-closed
+### Expected: 403 (or 401 when no token and ExceptionTranslationFilter fires first)
+### ===========================================================================
+
+### U-01 ✅ · No token → 401 (no JWT) or 403 (anonymous → fail-closed)
+GET {{host}}/api/v0/nonexistent-endpoint
+Accept: application/json
+
+###
+
+### U-02 ✅ · Valid CC token, unknown route → 403
+GET {{host}}/api/v0/nonexistent-endpoint
+Accept: application/json
+Authorization: Bearer {{cc_token}}
+
+###
+
+### U-03 ⚠ · Valid OBO token, unknown route → 403
+GET {{host}}/api/v0/nonexistent-endpoint
+Accept: application/json
+Authorization: Bearer {{obo_token}}
+
+###
+
+
+### ===========================================================================
+### SUMMARY MATRIX (reference)
+###
+###                    │ PUBLIC │ SECURED/CC │ SECURED/OBO │ UNKNOWN ROUTE
+### ───────────────────┼────────┼────────────┼─────────────┼──────────────
+###  No token          │  200   │    401     │    401      │   401/403
+###  Valid, allowed    │  200   │    200     │    200      │    403
+###  Valid, wrong flow │  200   │    403     │    403      │    403
+###  Valid, denied     │  200   │    403     │    403      │    403
+###  Expired/malformed │  200   │    401     │    401      │    401
+### ===========================================================================

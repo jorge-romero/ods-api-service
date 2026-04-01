@@ -10,6 +10,7 @@ import org.opendevstack.apiservice.project.exception.ProjectValidationException;
 import org.opendevstack.apiservice.project.model.CreateProjectResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -106,6 +107,17 @@ public class ProjectExceptionHandler {
         response.setErrorKey(ErrorKey.INTERNAL_ERROR.getKey());
         response.setMessage(ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<CreateProjectResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        log.error("Unexpected error: {}", ex.getMessage(), ex);
+        CreateProjectResponse response = new CreateProjectResponse();
+        response.setLocation(ProjectController.API_BASE_PATH);
+        response.setError(ErrorKey.BAD_REQUEST_BODY.getMessage());
+        response.setErrorKey(ErrorKey.BAD_REQUEST_BODY.getKey());
+        response.setMessage("An error occurred while processing the request.");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(Exception.class)
