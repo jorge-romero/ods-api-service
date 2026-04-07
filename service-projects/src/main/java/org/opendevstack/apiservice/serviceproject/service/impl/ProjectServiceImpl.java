@@ -20,7 +20,7 @@ public class ProjectServiceImpl implements ProjectService {
     private static final String TEAM_ROLE = "TEAM";
     private static final String STAKEHOLDER_ROLE = "STAKEHOLDER";
     
-    @Value("${ldap.group.pattern}")
+    @Value("${services.project.ldap.group.pattern}")
     private String ldapGroupPattern;
 
     private final ProjectRepository projectRepository;

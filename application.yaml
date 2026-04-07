@@ -1,71 +1,106 @@
+# Base HTTP server configuration.
+# Override these values with environment variables when deploying to another environment.
+server:
+  # TCP port used by the Spring Boot application.
+  port: 8080
+
+# Application logging configuration.
+# Raise levels temporarily for troubleshooting; keep them lower in shared environments.
 logging:
   level:
+    # Core Spring framework logs.
     org.springframework: INFO
+    # Security filter chain and JWT validation logs.
     org.springframework.security: TRACE
+    # Custom external service integration logs.
     org.opendevstack.apiservice.externalservice: DEBUG
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Persistence — PostgreSQL datasource + JPA / Hibernate
-#
-# Schema is managed externally via Liquibase (database module / Makefile).
-# Hibernate is set to `validate` so it only checks that entities match the
-# existing schema at boot — it never creates or alters tables.
-#
-# Required env vars (no defaults — must be explicitly set per environment):
-#   DB_HOST, DB_PORT, DB_NAME, DB_USERNAME, DB_PASSWORD
-# ──────────────────────────────────────────────────────────────────────────────
-spring:
-  datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:devstack}
-    username: ${DB_USERNAME:devstack}
-    password: ${DB_PASSWORD:devstack}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      # Pool sizing — tune per environment
-      maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
-      minimum-idle: ${DB_POOL_MIN_IDLE:2}
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
-  jpa:
-    hibernate:
-      # NEVER auto-create/alter — Liquibase owns the schema
-      ddl-auto: validate
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        # Log slow queries (> 500 ms) via Hibernate statistics
-        generate_statistics: false
-    # Avoid lazy-loading pitfalls: keep Session scoped to Service, not Request
-    open-in-view: false
-    show-sql: false
-
+# Spring Boot infrastructure configuration.
+# Most values here should be supplied from environment variables or a secret store.
 spring:
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: https://sts.windows.net/${AZURE_TENANT_ID}/
+          # URL of the identity provider JWK set used to validate JWT signatures.
+          jwk-set-uri: ${OAUTH2_JWK_SET_URI:}
+          # Expected issuer claim of incoming JWTs.
+          issuer-uri: ${OAUTH2_ISSUER:}
+          audiences:
+            # Allowed audience values for access tokens accepted by this API.
+            - ${OAUTH2_AUDIENCE:}
+            - ${OAUTH2_AUDIENCE2:99999}
+  datasource:
+    # JDBC connection string for the PostgreSQL database.
+    # Example: jdbc:postgresql://localhost:5432/ods_api_service
+    url: ${ODS_API_SERVICE_DB_DATASOURCE_URL}
+    # Database user used by the application.
+    username: ${ODS_API_SERVICE_DB_USER:opendevstack}
+    # Database password. Use a secret manager or injected environment variable in non-local setups.
+    password: ${ODS_API_SERVICE_DB_PASSWORD:opendevstack}
+    # JDBC driver class. Keep this aligned with the database engine in use.
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      # Maximum number of open connections in the pool.
+      maximum-pool-size: ${HIKARI_POOL_MAX_SIZE:10}
+      # Minimum number of idle connections kept ready.
+      minimum-idle: ${HIKARI_MIN_IDLE:2}
+      # Time to wait for a free connection before failing, in milliseconds.
+      connection-timeout: ${HIKARI_CONNECTION_TIMEOUT:30000}
+      # How long an idle connection may stay in the pool, in milliseconds.
+      idle-timeout: ${HIKARI_IDLE_TIMEOUT:600000}
+      # Maximum lifetime of a pooled connection, in milliseconds.
+      max-lifetime: ${HIKARI_MAX_LIFETIME:1800000}
+  jpa:
+    hibernate:
+      # Schema management mode. Use validate/update locally, avoid create/create-drop in shared environments.
+      ddl-auto: ${JPA_HIBERNATE_DDL_AUTO:validate}
+    properties:
+      hibernate:
+        # Enable Hibernate statistics only while investigating performance issues.
+        generate_statistics: ${JPA_HIBERNATE_GENERATE_STATISTICS:false}
+    # Disable the Open Session in View pattern by default.
+    open-in-view: ${JPA_OPEN_IN_VIEW:false}
+    # Log SQL statements only for debugging.
+    show-sql: ${JPA_SHOW_SQL:false}
+  management:
+    endpoints:
+      web:
+        exposure:
+          # Minimal actuator exposure under spring.*; the top-level management block below extends this further.
+          include: ${MANAGEMENT_ENDPOINTS_INCLUDE:health}
 
+# Custom application-level security switches.
 app:
   security:
+    # Master switch for application authentication and authorization.
+    enabled: true
     public-endpoints:
+      # Endpoints listed here remain reachable without authentication.
       - /actuator/health
-      - /actuator/health/**
+      - /actuator/info
+      - /api/v1/projects/*/platforms
 
+# Spring Boot Actuator configuration.
+# Restrict these endpoints in production if they expose operational details.
 management:
   endpoints:
     web:
       exposure:
+        # Explicit list of actuator endpoints exposed over HTTP.
         include: openapi, swagger-ui, beans, caches, configprops, env, health, httpexchanges, info, loggers, mappings
   endpoint:
     configprops:
+      # Shows bound configuration values in actuator output.
       show-values: always
     env:
+      # Shows environment-derived values in actuator output.
       show-values: always
     loggers:
+      # Allows runtime log level inspection and updates.
       access: unrestricted
     health:
+      # Exposes full health details and individual contributors.
       show-details: always
       show-components: always
   info:
@@ -76,52 +111,56 @@ management:
     recording:
       # Show all available info in /actuator/httpexchanges and also in Swagger
       include: request-headers, response-headers, authorization_header, cookie_headers, principal, remote_address, session_id, time_taken
-springdoc:
-  show-actuator: true
-  swagger-ui:
-    doc-expansion: none
-    try-it-out-enabled: true
-    filter: true
-    tags-sorter: alpha
-    operations-sorter: alpha
 
-openapi:
-  servers:
-    - url: "https://localhost:8080"
-      description: "Development environment"
 
+# OpenTelemetry settings.
+# Configure OTLP endpoint and sampling according to your observability platform.
 otel:
-    service:
-        name: devstack-api-service-dev
-        version: 0.0.3
-    exporter:
-        otlp:
-            endpoint: http://opentelemetry.example.com
-    traces:
-        exporter: logging,otlp
-        sampler: parentbased_traceidratio
-        sampler_arg: 1.0
-    metrics:
-        exporter: none
-    resource:
-        attributes: service.name=devstack-api-service,service.version=0.0.3,deployment.environment=development
-    instrumentation:
-        jdbc:
-            enabled: false
-        logback-appender:
-            enabled: true
+  service:
+    # Logical service name and version attached to telemetry data.
+    name: devstack-api-service-dev
+    version: 0.0.3
+  exporter:
+    otlp:
+      # Endpoint of the OpenTelemetry collector.
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+  traces:
+    # Send traces to both application logs and the OTLP collector.
+    exporter: logging,otlp
+    # Parent-based ratio sampling. sampler_arg=1.0 means sample all traces.
+    sampler: parentbased_traceidratio
+    sampler_arg: 1.0
+  metrics:
+    # Metrics export is disabled here.
+    exporter: none
+  resource:
+    # Resource attributes attached to every exported span.
+    attributes: service.name=devstack-api-service,service.version=0.0.3,deployment.environment=development
+  instrumentation:
+    jdbc:
+      # JDBC instrumentation is disabled, likely to reduce noise or overhead.
+      enabled: false
+    logback-appender:
+      # Enables trace correlation through logback.
+      enabled: true
 
 # External Service Configuration
 automation:
   platform:
     ansible:
+      # Toggle the Ansible automation integration.
       enabled: true
+      # Base URL of the Ansible Automation Platform / AWX API.
       base-url: ${ANSIBLE_BASE_URL:http://localhost:8080/api/v2}
+      # Credentials used to authenticate against Ansible.
       username: ${ANSIBLE_USERNAME:admin}
       password: ${ANSIBLE_PASSWORD:password}
+      # Request timeout in milliseconds.
       timeout: ${ANSIBLE_TIMEOUT:30000}
       ssl:
+        # When false, TLS certificates are not validated. Keep true outside local development.
         verify-certificates: ${ANSIBLE_SSL_VERIFY:true}
+        # Optional custom trust store settings for private CA certificates.
         trust-store-path: ${ANSIBLE_SSL_TRUSTSTORE_PATH:}
         trust-store-password: ${ANSIBLE_SSL_TRUSTSTORE_PASSWORD:}
         trust-store-type: ${ANSIBLE_SSL_TRUSTSTORE_TYPE:JKS}
@@ -129,11 +168,11 @@ automation:
     uipath:
       # Base URL of the UIPath Orchestrator instance
       host: ${UIPATH_HOST:https://orchestrator.example.com}
-      
+
       # Authentication credentials
       clientId: ${UIPATH_CLIENT_ID:your-client-id}
       clientSecret: ${UIPATH_CLIENT_SECRET:your-client-secret}
-      
+
       # Tenancy name (default: "default")
       tenancy-name: ${UIPATH_TENANCY_NAME:default}
 
@@ -143,10 +182,10 @@ automation:
       # API endpoints (defaults shown, can be overridden)
       login-endpoint: /api/Account/Authenticate
       queue-items-endpoint: /odata/QueueItems
-      
+
       # Request timeout in milliseconds
       timeout: 30000
-      
+
       # SSL Configuration
       ssl:
         # Set to false to disable certificate verification (DEV ONLY!)
@@ -156,25 +195,37 @@ automation:
         trust-store-password: ${TRUSTSTORE_PASSWORD:changeit}
         trust-store-type: ${UIPATH_SSL_TRUST_STORE_TYPE:JKS}
 
-
 apis:
   project-users:
+    # Workflow name triggered for project user automation tasks.
     ansible-workflow-name: ${API_PROJECT_USERS_WORKFLOW_NAME:ansible++workflow}
     token:
+      # Secret used to sign internal tokens. Replace the default in every non-local environment.
       secret: ${API_PROJECT_USERS_TOKEN_SECRET:devstack-api-service-jwt-secret-key-256bit-change-in-production}
+      # Token lifetime in hours.
       expiration-hours: ${API_PROJECT_USERS_TOKEN_EXPIRATION_HOURS:24}
 
+  projects:
+    # Workflow name used for project provisioning automation.
+    ansible-workflow-name: ${API_PROJECTS_MINIEDP_PROVISION_WORKFLOW_NAME}
+    # Supported project locations, typically provided as a comma-separated environment variable.
+    locations: ${API_PROJECTS_LOCATIONS}
 
 externalservices:
   openshift:
     instances:
       # Development OpenShift instance
       dev:
+        # API URL of the target cluster.
         api-url: ${OPENSHIFT_US_TEST_API_URL:https://api.dev.ocp.example.com:6443}
+        # Service account or user token used to access the cluster API.
         token: ${OPENSHIFT_US_TEST_TOKEN:your-dev-token-here}
+        # Default namespace/project to operate in.
         namespace: ${OPENSHIFT_US_TEST_NAMESPACE:devstack-dev}
+        # HTTP client timeouts in milliseconds.
         connection-timeout: 30000
         read-timeout: 30000
+        # When true, the client accepts untrusted certificates.
         trust-all-certificates: ${OPENSHIFT_US_TEST_TRUST_ALL:true}
 
       # Test OpenShift instance
@@ -190,7 +241,9 @@ externalservices:
     instances:
       # Development Bitbucket instance
       dev:
+        # Base REST URL of the Bitbucket server.
         base-url: ${BITBUCKET_DEV_BASE_REST_URL:https://bitbucket.dev.example.com}
+        # Preferred authentication method: bearer token.
         bearer-token: ${BITBUCKET_DEV_BEARER_TOKEN:}
         # OR use basic auth if bearer token is not available:
         # username: ${BITBUCKET_DEV_USERNAME:admin}
@@ -198,7 +251,7 @@ externalservices:
         connection-timeout: 30000
         read-timeout: 30000
         trust-all-certificates: ${BITBUCKET_DEV_TRUST_ALL:true}
-      
+
       # Production Bitbucket instance
       prod:
         base-url: ${BITBUCKET_PROD_BASE_REST_URL:https://bitbucket.prod.example.com}
@@ -214,11 +267,14 @@ externalservices:
     clusters:
       # Test Cluster
       test:
+        # Base cluster domain used to derive webhook proxy routes.
         cluster-base: ${WEBHOOK_PROXY_TEST_CLUSTER_BASE:apps.cluster.ocp.com}
         connection-timeout: ${WEBHOOK_PROXY_TEST_CONNECTION_TIMEOUT:30000}
         read-timeout: ${WEBHOOK_PROXY_TEST_READ_TIMEOUT:30000}
         trust-all-certificates: ${WEBHOOK_PROXY_TEST_TRUST_ALL:false}
+        # Relative path to the Jenkinsfile used when none is supplied.
         default-jenkinsfile-path: ${WEBHOOK_PROXY_TEST_JENKINSFILE_PATH:Jenkinsfile}
 
   projects-info-service:
+    # Base URL of the downstream Projects Info Service consumed by this application.
     base-url: ${PROJECTS_INFO_SERVICE_BASE_URL:http://localhost:8081}
