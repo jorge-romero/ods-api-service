@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.opendevstack.apiservice.externalservice.marketplace.model.CreateComponentParameter;
 import org.opendevstack.apiservice.externalservice.marketplace.model.ProjectComponent;
 import org.opendevstack.apiservice.externalservice.marketplace.service.MarketplaceService;
+import org.opendevstack.apiservice.project.exception.ComponentCreationException;
+import org.opendevstack.apiservice.project.exception.ComponentNotFoundException;
 import org.opendevstack.apiservice.project.mapper.MarketplaceMapper;
 import org.opendevstack.apiservice.project.model.Component;
 import org.opendevstack.apiservice.project.model.CreateComponentRequest;
@@ -25,7 +27,9 @@ public class ComponentsFacade {
         ProjectComponent marketplaceComponent = marketplaceExternalService.getProjectComponent(projectId, componentId);
         if (marketplaceComponent == null) {
             log.info("Marketplace component with id {} not found", componentId);
-            return null;
+            throw new ComponentNotFoundException(
+                    String.format("Component '%s' not found for project '%s'", componentId, projectId)
+            );
         }
         return marketplaceMapper.mapMarketplaceComponentToV0Component(marketplaceComponent);
     }
@@ -35,7 +39,9 @@ public class ComponentsFacade {
         ProjectComponent marketplaceComponent = marketplaceExternalService.createProjectComponent(projectId, createComponentParameterList);
         if (marketplaceComponent == null) {
             log.error("Failed to create component in marketplace for project with id {}", projectId);
-            return null;
+            throw new ComponentCreationException(
+                    String.format("Failed to create component for project '%s'", projectId)
+            );
         }
         return marketplaceMapper.mapMarketplaceComponentToV0Component(marketplaceComponent);
     }

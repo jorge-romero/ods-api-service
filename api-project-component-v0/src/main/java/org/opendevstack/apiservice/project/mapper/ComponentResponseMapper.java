@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 public interface ComponentResponseMapper {
 
     default ResponseEntity<CreateComponentResponse> toResponseEntity(CreateComponentResponse response) {
-        return new ResponseEntity<>(response, HttpStatus.valueOf(response.getErrorCode()));
+        return new ResponseEntity<>(response, HttpStatus.valueOf(response.getHttpStatus()));
     }
-
 }

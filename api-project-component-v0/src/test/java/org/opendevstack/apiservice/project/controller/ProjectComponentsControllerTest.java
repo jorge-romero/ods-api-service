@@ -1,26 +1,32 @@
 package org.opendevstack.apiservice.project.controller;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
+import org.opendevstack.apiservice.project.exception.ComponentCreationException;
+import org.opendevstack.apiservice.project.exception.ComponentNotFoundException;
+import org.opendevstack.apiservice.project.facade.ComponentsFacade;
 import org.opendevstack.apiservice.project.mapper.ComponentResponseMapper;
 import org.opendevstack.apiservice.project.model.Component;
 import org.opendevstack.apiservice.project.model.CreateComponentRequest;
 import org.opendevstack.apiservice.project.model.CreateComponentResponse;
-import org.opendevstack.apiservice.project.facade.ComponentsFacade;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-import static org.opendevstack.apiservice.project.util.TestObjectsBuilder.*;
+import java.util.UUID;
 
-@ExtendWith(MockitoExtension.class)
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.opendevstack.apiservice.project.util.TestObjectsBuilder.buildTestComponent;
+import static org.opendevstack.apiservice.project.util.TestObjectsBuilder.buildTestCreateComponentRequest;
+
 class ProjectComponentsControllerTest {
 
     @Mock
@@ -30,71 +36,93 @@ class ProjectComponentsControllerTest {
 
     private ProjectComponentsController projectComponentsController;
 
+    private AutoCloseable openMocks;
+
     @BeforeEach
     void setup() {
+        openMocks = MockitoAnnotations.openMocks(this);
         projectComponentsController = new ProjectComponentsController(componentsFacade, componentResponseMapper);
     }
 
-    @Test
-    void testCreateProjectComponent_whenSuccess_thenReturnOk() throws Exception {
-        Component testComponent = buildTestComponent();
-        String testProjectId = "testProjectId";
-        CreateComponentRequest testCreateComponentRequest = buildTestCreateComponentRequest();
-        CreateComponentResponse testServiceResponseSuccess = buildTestCreateComponentResponseSuccess(testComponent.getId(),
-                testProjectId);
-
-        when(componentsFacade.createProjectComponent(anyString(), any(CreateComponentRequest.class)))
-                .thenReturn(testComponent);
-
-        ResponseEntity<CreateComponentResponse> response = projectComponentsController.createProjectComponent(testProjectId,
-                testCreateComponentRequest);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody()).isEqualTo(testServiceResponseSuccess);
+    @AfterEach
+    void tearDown() throws Exception {
+        openMocks.close();
     }
 
     @Test
-    void testCreateProjectComponent_whenFailure_thenReturnErrorResponse() throws Exception {
-        CreateComponentRequest testCreateComponentRequest = buildTestCreateComponentRequest();
-        String testProjectId = "testProjectId";
-        CreateComponentResponse testServiceResponseFailure = buildTestCreateComponentResponseFailure(testProjectId);
+    void create_project_component_returns_ok_when_component_is_created() {
+        String projectId = "testProjectId";
+        CreateComponentRequest request = buildTestCreateComponentRequest();
+        Component createdComponent = buildTestComponent();
+        createdComponent.setId("component-123");
 
-        when(componentsFacade.createProjectComponent(anyString(), any(CreateComponentRequest.class)))
-                .thenReturn(null);
+        when(componentsFacade.createProjectComponent(eq(projectId), any(CreateComponentRequest.class)))
+                .thenReturn(createdComponent);
 
-        ResponseEntity<CreateComponentResponse> response = projectComponentsController.createProjectComponent(testProjectId,
-                testCreateComponentRequest);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody()).isEqualTo(testServiceResponseFailure);
-    }
-
-    @Test
-    void testGetProjectComponent_whenSuccess_thenReturnOk() throws Exception {
-        Component testComponent = buildTestComponent();
-
-        when(componentsFacade.getProjectComponent(anyString(), anyString()))
-                .thenReturn(testComponent);
-
-        ResponseEntity<Component> response = projectComponentsController.getProjectComponent("projectId",
-                "testId");
+        ResponseEntity<CreateComponentResponse> response = projectComponentsController.createProjectComponent(projectId, request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody()).isEqualTo(testComponent);
+        assertThat(response.getBody().getHttpStatus()).isEqualTo(HttpStatus.OK.name());
+        assertThat(response.getBody().getErrorKey()).isEqualTo("000");
+        assertThat(response.getBody().getMessage()).isEqualTo("Component created");
+        assertThat(response.getBody().getPath()).isEqualTo("/api/pub/v0/projects/testProjectId/components/component-123");
+        verify(componentsFacade).createProjectComponent(projectId, request);
     }
 
     @Test
-    void testGetProjectComponent_whenFailure_thenReturnErrorResponse() throws Exception {
-        when(componentsFacade.getProjectComponent(anyString(), anyString()))
+    void create_project_component_returns_internal_error_when_component_creation_returns_null() {
+        String projectId = "testProjectId";
+        CreateComponentRequest request = buildTestCreateComponentRequest();
+
+        when(componentsFacade.createProjectComponent(eq(projectId), any(CreateComponentRequest.class)))
                 .thenReturn(null);
 
-        ResponseEntity<Component> response = projectComponentsController.getProjectComponent("projectId",
-                "testId");
+        assertThatThrownBy(() -> projectComponentsController.createProjectComponent(projectId, request))
+            .isInstanceOf(ComponentCreationException.class)
+            .hasMessage("Failed to create component for project 'testProjectId'");
+        verify(componentsFacade).createProjectComponent(projectId, request);
+    }
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(response.getBody()).isNull();
+    @Test
+        void create_project_component_propagates_exception_when_facade_throws_exception() {
+        String projectId = "testProjectId";
+        CreateComponentRequest request = buildTestCreateComponentRequest();
+
+        when(componentsFacade.createProjectComponent(eq(projectId), any(CreateComponentRequest.class)))
+                .thenThrow(new RuntimeException("boom"));
+
+        assertThatThrownBy(() -> projectComponentsController.createProjectComponent(projectId, request))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("boom");
+        verify(componentsFacade).createProjectComponent(projectId, request);
+    }
+
+    @Test
+    void get_project_component_returns_ok_when_component_exists() {
+        String projectId = "projectId";
+        UUID componentId = UUID.randomUUID();
+        Component testComponent = buildTestComponent();
+
+        when(componentsFacade.getProjectComponent(projectId, componentId.toString())).thenReturn(testComponent);
+
+        ResponseEntity<Component> response = projectComponentsController.getProjectComponent(projectId, componentId);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo(testComponent);
+        verify(componentsFacade).getProjectComponent(projectId, componentId.toString());
+    }
+
+    @Test
+    void get_project_component_throws_not_found_when_component_does_not_exist() {
+        String projectId = "projectId";
+        UUID componentId = UUID.randomUUID();
+
+        when(componentsFacade.getProjectComponent(projectId, componentId.toString())).thenReturn(null);
+
+        assertThatThrownBy(() -> projectComponentsController.getProjectComponent(projectId, componentId))
+                .isInstanceOf(ComponentNotFoundException.class)
+                .hasMessage("Component '" + componentId + "' not found for project 'projectId'");
+        verify(componentsFacade).getProjectComponent(projectId, componentId.toString());
     }
 }

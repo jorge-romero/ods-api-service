@@ -6,10 +6,10 @@ import org.opendevstack.apiservice.externalservice.marketplace.model.ProjectComp
 import org.opendevstack.apiservice.externalservice.marketplace.service.MarketplaceService;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -31,17 +31,27 @@ public class MarketplaceServiceMockImpl implements MarketplaceService {
     public ProjectComponent createProjectComponent(String projectId, List<CreateComponentParameter> createComponentParams) {
         log.info("Creating component for project '" + projectId + "'" + " with request: " + createComponentParams);
         ProjectComponent mockComponent = new ProjectComponent();
-        mockComponent.setComponentId(generateNextId());
+        mockComponent.setComponentId(UUID.randomUUID());
         mockComponent.setCanBeDeleted(true);
         mockComponent.setStatus("CREATING");
-        ComposedId composedId = new ComposedId(projectId, mockComponent.getComponentId());
+        mockComponent.setName(extractParam(createComponentParams, "component_id"));
+        mockComponent.setProductId(extractParam(createComponentParams, "component_type"));
+        mockComponent.setProductName("Mock Product");
+        mockComponent.setProductDescription("Mock product description");
+        mockComponent.setEnvironment("DEV");
+        mockComponent.setComponentType("ODS");
+        ComposedId composedId = new ComposedId(projectId, mockComponent.getComponentId().toString());
         mockComponentsCache.put(composedId, mockComponent);
 
         return mockComponent;
     }
 
-    private String generateNextId() {
-        return "mock-component-id-" + (mockComponentsCache.size() + 1);
+    private String extractParam(List<CreateComponentParameter> params, String key) {
+        return params.stream()
+                .filter(p -> key.equals(p.getName()))
+                .map(CreateComponentParameter::getValue)
+                .findFirst()
+                .orElse(null);
     }
 
     class ComposedId {

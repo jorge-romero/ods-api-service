@@ -56,7 +56,8 @@ public class ProjectRequestValidator {
         }
         
         if (!locations.contains(location)) {
-            throw new ProjectValidationException(ErrorKey.INVALID_LOCATION);
+            throw new ProjectValidationException(ErrorKey.INVALID_LOCATION, 
+                String.join(", ", locations));
         }
     }
 }

@@ -81,7 +81,7 @@ public class ProjectExceptionHandler {
         response.setLocation(ProjectController.API_BASE_PATH);
         response.setError(HttpStatus.BAD_REQUEST.getReasonPhrase());
         response.setErrorKey(errorKey.getKey());
-        response.setMessage(errorKey.getMessage());
+        response.setMessage(ex.getMessage()); // Needs to get the full message with additional info provided.
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 

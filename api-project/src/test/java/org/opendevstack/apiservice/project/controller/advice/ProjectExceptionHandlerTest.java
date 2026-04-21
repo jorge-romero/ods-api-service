@@ -22,6 +22,7 @@ import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -94,6 +95,25 @@ class ProjectExceptionHandlerTest {
         assertNull(result.getBody().getProjectKey());
         assertNull(result.getBody().getStatus());
         assertNull(result.getBody().getErrorDescription());
+    }
+
+    @Test
+    void handle_validation_exception_preserves_additional_message_content() {
+        List<String> validLocations = List.of("MADRID", "BARCELONA", "SANT_CUGAT");
+        ProjectValidationException exception = new ProjectValidationException(
+                ErrorKey.INVALID_LOCATION,
+            String.join(",", validLocations)
+        );
+
+        ResponseEntity<CreateProjectResponse> result = sut.handleValidationException(exception);
+
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        assertNotNull(result.getBody());
+        assertEquals("011", result.getBody().getErrorKey());
+        assertEquals(
+            "Incorrect location. Valid locations are: MADRID,BARCELONA,SANT_CUGAT",
+                result.getBody().getMessage()
+        );
     }
 
     @Test

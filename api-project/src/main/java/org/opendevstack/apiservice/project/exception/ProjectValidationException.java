@@ -11,5 +11,10 @@ public class ProjectValidationException extends RuntimeException {
         super(errorKey.getMessage());
         this.errorKey = errorKey;
     }
+
+    public ProjectValidationException(ErrorKey errorKey, String additionalMessage) {
+        super(errorKey.getMessage() + " " + additionalMessage);
+        this.errorKey = errorKey;
+    }
 }
 

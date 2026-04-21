@@ -12,9 +12,12 @@ import org.opendevstack.apiservice.serviceproject.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.Comparator;
 import java.util.Set;
 
+@Slf4j
 @Service
 public class ProjectExistenceServiceImpl implements ProjectExistenceService {
 
@@ -31,7 +34,6 @@ public class ProjectExistenceServiceImpl implements ProjectExistenceService {
         this.openshiftService = openshiftService;
         this.projectService = projectService;
     }
-
     @Override
     public boolean isProjectFound(String projectKey) throws ProjectExistenceServiceException {
         try {
@@ -46,6 +48,7 @@ public class ProjectExistenceServiceImpl implements ProjectExistenceService {
         } catch (OpenshiftException e) {
             throw new ProjectExistenceServiceException("Failed to check project in Openshift", e);
         } catch (RuntimeException e) {
+            log.error("Unexpected error while checking project existence for key '{}'", projectKey, e);
             throw new ProjectExistenceServiceException("Unexpected error while checking project existence", e);
         }
     }

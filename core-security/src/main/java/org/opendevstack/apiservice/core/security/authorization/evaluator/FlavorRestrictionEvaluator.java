@@ -37,7 +37,7 @@ public class FlavorRestrictionEvaluator implements PolicyEvaluator {
         }
 
         String requestedFlavor = (String) body.get("projectFlavor");
-        if (requestedFlavor == null) {
+        if (requestedFlavor == null || requestedFlavor.trim().isEmpty()) {
             return AuthorizationDecision.ABSTAIN;
         }
 
