@@ -22,6 +22,8 @@ import org.springframework.stereotype.Repository;
 public interface ProjectRepository extends JpaRepository<ProjectEntity, UUID> {
 	
 	Optional<ProjectEntity> findByProjectKeyIgnoreCase(String projectKey);
+
+	List<ProjectEntity> findByProjectNameIgnoreCase(String projectName);
 	
 	List<ProjectEntity> findByDeletedFalse();
 	

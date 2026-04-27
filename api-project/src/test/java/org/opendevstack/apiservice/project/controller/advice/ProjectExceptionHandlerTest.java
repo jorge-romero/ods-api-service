@@ -11,6 +11,7 @@ import org.opendevstack.apiservice.externalservice.aap.exception.AutomationPlatf
 import org.opendevstack.apiservice.project.controller.ProjectController;
 import org.opendevstack.apiservice.project.exception.ClientAppNotRegisteredException;
 import org.opendevstack.apiservice.project.exception.ErrorKey;
+import org.opendevstack.apiservice.project.exception.ProjectAlreadyExistsException;
 import org.opendevstack.apiservice.project.exception.ProjectCreationException;
 import org.opendevstack.apiservice.project.exception.ProjectValidationException;
 import org.opendevstack.apiservice.project.model.CreateProjectRequest;
@@ -18,6 +19,7 @@ import org.opendevstack.apiservice.project.model.CreateProjectResponse;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -286,5 +288,33 @@ class ProjectExceptionHandlerTest {
         assertNull(result.getBody().getProjectKey());
         assertNull(result.getBody().getStatus());
         assertNull(result.getBody().getErrorDescription());
+    }
+
+    @Test
+    void handle_http_message_not_readable_exception_returns_bad_request_with_error_key_017() {
+        HttpMessageNotReadableException exception = new HttpMessageNotReadableException("Malformed JSON", new RuntimeException("cause"));
+
+        ResponseEntity<CreateProjectResponse> result = sut.handleHttpMessageNotReadableException(exception);
+
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        assertNotNull(result.getBody());
+        assertEquals(ProjectController.API_BASE_PATH, result.getBody().getLocation());
+        assertEquals("Bad Request", result.getBody().getError());
+        assertEquals("017", result.getBody().getErrorKey());
+        assertEquals("Request body should be a valid json.", result.getBody().getMessage());
+    }
+
+    @Test
+    void handle_project_already_exists_exception_returns_conflict() {
+        ProjectAlreadyExistsException exception = new ProjectAlreadyExistsException();
+
+        ResponseEntity<CreateProjectResponse> result = sut.handleProjectAlreadyExistsException(exception);
+
+        assertEquals(HttpStatus.CONFLICT, result.getStatusCode());
+        assertNotNull(result.getBody());
+        assertEquals(ProjectController.API_BASE_PATH, result.getBody().getLocation());
+        assertEquals("Conflict", result.getBody().getError());
+        assertEquals("025", result.getBody().getErrorKey());
+        assertEquals("Project already exists", result.getBody().getMessage());
     }
 }

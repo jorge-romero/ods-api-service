@@ -11,6 +11,7 @@ import org.opendevstack.apiservice.serviceproject.exception.ProjectExistenceServ
 import org.opendevstack.apiservice.serviceproject.model.ProjectResponse;
 import org.opendevstack.apiservice.serviceproject.service.ProjectService;
 
+import java.util.List;
 import java.util.Collections;
 import java.util.Set;
 
@@ -35,8 +36,8 @@ class ProjectExistenceServiceImplTest {
     private ProjectExistenceServiceImpl sut;
 
     @BeforeEach
-    void setUp() throws Exception {
-        MockitoAnnotations.openMocks(this).close();
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
         sut = new ProjectExistenceServiceImpl(bitbucketService, jiraService, openshiftService, projectService);
     }
 
@@ -133,5 +134,25 @@ class ProjectExistenceServiceImplTest {
         assertThrows(ProjectExistenceServiceException.class, () -> {
             sut.isProjectFound("KEY8");
         });
+    }
+
+    @Test
+    void is_project_found_by_name_returns_true_when_project_exists_in_db() throws Exception {
+        when(projectService.findProjectsByName("Project One")).thenReturn(List.of(new ProjectResponse()));
+
+        boolean result = sut.isProjectFoundByName("Project One");
+
+        assertTrue(result);
+        verify(projectService).findProjectsByName("Project One");
+    }
+
+    @Test
+    void is_project_found_by_name_returns_false_when_project_does_not_exist_in_db() throws Exception {
+        when(projectService.findProjectsByName("Missing Project")).thenReturn(List.of());
+
+        boolean result = sut.isProjectFoundByName("Missing Project");
+
+        assertFalse(result);
+        verify(projectService).findProjectsByName("Missing Project");
     }
 }

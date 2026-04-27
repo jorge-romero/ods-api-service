@@ -10,6 +10,7 @@ import org.opendevstack.apiservice.serviceproject.mapper.ProjectResponseMapper;
 import org.opendevstack.apiservice.serviceproject.model.ProjectResponse;
 import org.opendevstack.apiservice.serviceproject.model.Status;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -89,7 +91,7 @@ class ProjectServiceImplTest {
         
         assertNull(result);
         verify(projectRepository).findByProjectKeyIgnoreCase(projectKey);
-        verify(projectResponseMapper, never()).toCreateProjectResponse(any());
+        verify(projectResponseMapper, never()).toCreateProjectResponse(any(ProjectEntity.class));
     }
 
     @Test
@@ -144,5 +146,47 @@ class ProjectServiceImplTest {
         assertNotNull(result);
         assertEquals(projectKey, result.getProjectKey());
         verify(projectRepository).findByProjectKeyIgnoreCase(projectKey);
+    }
+
+    @Test
+    void find_projects_by_name_returns_responses_when_projects_exist() {
+        String projectName = "My Project";
+
+        ProjectEntity projectEntity = ProjectEntity.builder()
+                .id(UUID.randomUUID())
+                .projectKey("MY-PROJECT")
+                .projectName(projectName)
+                .build();
+
+        ProjectResponse expectedResponse = ProjectResponse.builder()
+                .projectKey("MY-PROJECT")
+                .status(Status.RUNNING)
+                .build();
+
+        when(projectRepository.findByProjectNameIgnoreCase(projectName)).thenReturn(List.of(projectEntity));
+        when(projectResponseMapper.toCreateProjectResponse(List.of(projectEntity))).thenReturn(List.of(expectedResponse));
+
+        List<ProjectResponse> result = projectService.findProjectsByName(projectName);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("MY-PROJECT", result.get(0).getProjectKey());
+        verify(projectRepository).findByProjectNameIgnoreCase(projectName);
+        verify(projectResponseMapper).toCreateProjectResponse(List.of(projectEntity));
+    }
+
+    @Test
+    void find_projects_by_name_returns_empty_list_when_project_does_not_exist() {
+        String projectName = "Unknown Project";
+
+        when(projectRepository.findByProjectNameIgnoreCase(projectName)).thenReturn(List.of());
+        when(projectResponseMapper.toCreateProjectResponse(anyList())).thenReturn(List.of());
+
+        List<ProjectResponse> result = projectService.findProjectsByName(projectName);
+
+        assertNotNull(result);
+        assertEquals(0, result.size());
+        verify(projectRepository).findByProjectNameIgnoreCase(projectName);
+        verify(projectResponseMapper).toCreateProjectResponse(anyList());
     }
 }

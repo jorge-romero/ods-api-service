@@ -6,6 +6,7 @@ import org.apache.logging.log4j.util.Strings;
 import org.opendevstack.apiservice.persistence.entity.ClientAppEntity;
 import org.opendevstack.apiservice.persistence.entity.ClientAppProjectFlavorEntity;
 import org.opendevstack.apiservice.project.exception.ErrorKey;
+import org.opendevstack.apiservice.project.exception.ProjectAlreadyExistsException;
 import org.opendevstack.apiservice.project.exception.ProjectCreationException;
 import org.opendevstack.apiservice.project.exception.ProjectValidationException;
 import org.opendevstack.apiservice.project.model.CreateProjectRequest;
@@ -15,6 +16,7 @@ import org.opendevstack.apiservice.serviceproject.service.GenerateProjectKeyServ
 import org.opendevstack.apiservice.serviceproject.service.ProjectExistenceService;
 import org.springframework.stereotype.Component;
 
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -37,7 +39,7 @@ public class ProjectCreationCommandBuilder {
         String x2account = firstNonBlank(request.getX2OdsAccount(), flavor.getServiceAccount());
         String location = firstNonBlank(request.getLocation(), flavor.getLocation());
         String projectKey = resolveProjectKey(request.getProjectKey(), flavor);
-        String projectName = firstNonBlank(request.getProjectName(), projectKey);
+        String projectName = resolveProjectName(request.getProjectName(), projectKey);
         String projectDescription = firstNonBlank(request.getProjectDescription(), "project " + projectFlavor);
 
         return new ProjectCreationCommand(
@@ -91,7 +93,11 @@ public class ProjectCreationCommandBuilder {
         if (matchingFlavors.size() != 1) {
             log.warn("ConfigItem '{}' does not match exactly one flavor for clientApp '{}'",
                     configurationItem, clientId);
-            throw new ProjectValidationException(ErrorKey.INVALID_CONFIG_ITEM);
+            String message = MessageFormat.
+                    format("Not exists a project flavor configured for the Config Item {0}. " +
+                            "To create a project under {0} the projectFlavor parameter is mandatory.", 
+                            configurationItem);
+            throw new ProjectValidationException(ErrorKey.INVALID_CONFIG_ITEM, message);
         }
 
         ClientAppProjectFlavorEntity matchedFlavor = matchingFlavors.getFirst();
@@ -112,7 +118,7 @@ public class ProjectCreationCommandBuilder {
                     return existingProjectKey;
                 }
 
-                throw new ProjectValidationException(ErrorKey.PROJECT_ALREADY_EXISTS);
+                throw new ProjectAlreadyExistsException(ErrorKey.PROJECT_ALREADY_EXISTS);
             }
 
             String pattern = flavor.getProjectKeyPattern();
@@ -137,6 +143,20 @@ public class ProjectCreationCommandBuilder {
 
     private String firstNonBlank(String preferred, String fallback) {
         return Strings.isNotEmpty(preferred) ? preferred : fallback;
+    }
+    
+    private String resolveProjectName(String preferred, String fallback) {
+        if (!Strings.isEmpty(preferred)) {
+            try {
+                if (projectExistenceService.isProjectFoundByName(preferred)) {
+                    throw new ProjectAlreadyExistsException(ErrorKey.PROJECT_SAME_PROJECT_NAME_ALREADY_EXISTS);
+                }
+            } catch (ProjectExistenceServiceException e) {
+                throw new ProjectCreationException("Error checking if project name already exists: " + e.getMessage(), e);
+            }
+        }
+        
+        return firstNonBlank(preferred, fallback);
     }
 }
 

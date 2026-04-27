@@ -5,6 +5,7 @@ import org.opendevstack.apiservice.externalservice.aap.exception.AutomationPlatf
 import org.opendevstack.apiservice.project.controller.ProjectController;
 import org.opendevstack.apiservice.project.exception.ClientAppNotRegisteredException;
 import org.opendevstack.apiservice.project.exception.ErrorKey;
+import org.opendevstack.apiservice.project.exception.ProjectAlreadyExistsException;
 import org.opendevstack.apiservice.project.exception.ProjectCreationException;
 import org.opendevstack.apiservice.project.exception.ProjectValidationException;
 import org.opendevstack.apiservice.project.model.CreateProjectResponse;
@@ -81,9 +82,23 @@ public class ProjectExceptionHandler {
         response.setLocation(ProjectController.API_BASE_PATH);
         response.setError(HttpStatus.BAD_REQUEST.getReasonPhrase());
         response.setErrorKey(errorKey.getKey());
-        response.setMessage(ex.getMessage()); // Needs to get the full message with additional info provided.
+        response.setMessage(ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
+
+    @ExceptionHandler(ProjectAlreadyExistsException.class)
+    public ResponseEntity<CreateProjectResponse> handleProjectAlreadyExistsException(ProjectAlreadyExistsException ex) {
+        log.warn("Validation error: {}", ex.getMessage());
+        ErrorKey errorKey = ex.getErrorKey() != null
+            ? ex.getErrorKey()
+            : ErrorKey.PROJECT_ALREADY_EXISTS;
+        CreateProjectResponse response = new CreateProjectResponse();
+        response.setLocation(ProjectController.API_BASE_PATH);
+        response.setError(HttpStatus.CONFLICT.getReasonPhrase());
+        response.setErrorKey(errorKey.getKey());
+        response.setMessage(errorKey.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }    
 
     @ExceptionHandler(ProjectCreationException.class)
     public ResponseEntity<CreateProjectResponse> handleProjectCreationException(
@@ -114,9 +129,9 @@ public class ProjectExceptionHandler {
         log.error("Unexpected error: {}", ex.getMessage(), ex);
         CreateProjectResponse response = new CreateProjectResponse();
         response.setLocation(ProjectController.API_BASE_PATH);
-        response.setError(ErrorKey.BAD_REQUEST_BODY.getMessage());
-        response.setErrorKey(ErrorKey.BAD_REQUEST_BODY.getKey());
-        response.setMessage("An error occurred while processing the request.");
+        response.setError(ErrorKey.COMPONENT_PARAM_INVALID_FORMAT.getMessage());
+        response.setErrorKey(ErrorKey.COMPONENT_PARAM_INVALID_FORMAT.getKey());
+        response.setMessage("Request body should be a valid json.");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 

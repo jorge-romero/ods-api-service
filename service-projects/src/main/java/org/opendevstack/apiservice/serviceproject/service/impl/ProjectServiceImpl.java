@@ -10,6 +10,7 @@ import org.opendevstack.apiservice.serviceproject.service.ProjectService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -59,6 +60,12 @@ public class ProjectServiceImpl implements ProjectService {
         }
         
         return null;
+    }
+
+    @Override
+    public List<ProjectResponse> findProjectsByName(String projectName) {
+        List<ProjectEntity> projects = projectRepository.findByProjectNameIgnoreCase(projectName);
+        return projectResponseMapper.toCreateProjectResponse(projects);
     }
 
     private String getLdapGroup(String role, String projectKey) {

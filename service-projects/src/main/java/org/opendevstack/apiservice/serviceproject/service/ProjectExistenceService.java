@@ -5,4 +5,6 @@ import org.opendevstack.apiservice.serviceproject.exception.ProjectExistenceServ
 public interface ProjectExistenceService {
     
     boolean isProjectFound(String projectKey) throws ProjectExistenceServiceException;
+
+    boolean isProjectFoundByName(String projecName) throws ProjectExistenceServiceException;
 }

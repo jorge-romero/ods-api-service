@@ -8,20 +8,6 @@ public final class ProjectResponseFactory {
     private ProjectResponseFactory() {
     }
 
-    public static CreateProjectResponse conflict(String message, String location) {
-        return error(
-                ErrorKey.PROJECT_ALREADY_EXISTS.getMessage(), 
-                ErrorKey.PROJECT_ALREADY_EXISTS.getKey(), 
-                message, location);
-    }
-
-    public static CreateProjectResponse projectKeyGenerationFailed(String location) {
-        return error(ErrorKey.INTERNAL_ERROR.getMessage(), 
-                "PROJECT_KEY_GENERATION_FAILED",
-                "Failed to generate a unique project key.",
-                location);
-    }
-
     public static CreateProjectResponse notFound(String projectKey, String location) {
         return error(
                 ErrorKey.PROJECT_NOT_FOUND.getMessage(), 
@@ -30,22 +16,6 @@ public final class ProjectResponseFactory {
                 location
         );
     }
-
-    public static CreateProjectResponse internalError(String location) {
-        return error(
-                ErrorKey.INTERNAL_ERROR.getMessage(),
-                ErrorKey.INTERNAL_ERROR.getKey(),
-                "An error occurred while processing the request.",
-                location);
-    }
-
-    public static CreateProjectResponse internalError(String location, String message) {
-        return error(
-                ErrorKey.INTERNAL_ERROR.getMessage(),
-                ErrorKey.INTERNAL_ERROR.getKey(),
-                message,
-                location);
-    }    
 
     private static CreateProjectResponse error(String error, String errorKey, String message, String location) {
         CreateProjectResponse response = new CreateProjectResponse();

@@ -8,6 +8,7 @@ import org.mockito.MockitoAnnotations;
 import org.opendevstack.apiservice.persistence.entity.ClientAppEntity;
 import org.opendevstack.apiservice.persistence.entity.ClientAppProjectFlavorEntity;
 import org.opendevstack.apiservice.project.exception.ErrorKey;
+import org.opendevstack.apiservice.project.exception.ProjectAlreadyExistsException;
 import org.opendevstack.apiservice.project.exception.ProjectCreationException;
 import org.opendevstack.apiservice.project.exception.ProjectValidationException;
 import org.opendevstack.apiservice.project.model.CreateProjectRequest;
@@ -97,14 +98,14 @@ class ProjectCreationCommandBuilderTest {
     }
 
     @Test
-    void build_throws_validation_exception_when_project_key_already_exists() throws ProjectExistenceServiceException {
+    void build_throws_project_already_exists_exception_when_project_key_already_exists() throws ProjectExistenceServiceException {
         ClientAppProjectFlavorEntity flavor = build_flavor("DLSS", "CI-001", new String[] {}, "eu", "owner1");
         ClientAppEntity clientApp = build_client_app(List.of(flavor));
         CreateProjectRequest request = build_request("DLSS", null, "KEY01");
 
         when(projectExistenceService.isProjectFound("KEY01")).thenReturn(true);
 
-        ProjectValidationException ex = assertThrows(ProjectValidationException.class,
+        ProjectAlreadyExistsException ex = assertThrows(ProjectAlreadyExistsException.class,
                 () -> sut.build(request, clientApp));
         assertEquals(ErrorKey.PROJECT_ALREADY_EXISTS, ex.getErrorKey());
     }
@@ -140,6 +141,33 @@ class ProjectCreationCommandBuilderTest {
 
         when(generateProjectKeyService.generateProjectKey("DLSS%06d"))
                 .thenThrow(new org.opendevstack.apiservice.serviceproject.exception.ProjectKeyGenerationException("fail"));
+
+        assertThrows(ProjectCreationException.class, () -> sut.build(request, clientApp));
+    }
+
+    @Test
+    void build_throws_project_already_exists_exception_when_project_name_already_exists() throws Exception {
+        ClientAppProjectFlavorEntity flavor = build_flavor("DLSS", "CI-001", new String[] {}, "eu", "owner1");
+        ClientAppEntity clientApp = build_client_app(List.of(flavor));
+        CreateProjectRequest request = build_request("DLSS", null, "KEY01");
+        request.setProjectName("Existing Project");
+
+        when(projectExistenceService.isProjectFound("KEY01")).thenReturn(false);
+        when(projectExistenceService.isProjectFoundByName("Existing Project")).thenReturn(true);
+
+        assertThrows(ProjectAlreadyExistsException.class, () -> sut.build(request, clientApp));
+    }
+
+    @Test
+    void build_throws_project_creation_exception_when_project_name_check_fails() throws Exception {
+        ClientAppProjectFlavorEntity flavor = build_flavor("DLSS", "CI-001", new String[] {}, "eu", "owner1");
+        ClientAppEntity clientApp = build_client_app(List.of(flavor));
+        CreateProjectRequest request = build_request("DLSS", null, "KEY01");
+        request.setProjectName("Any Project");
+
+        when(projectExistenceService.isProjectFound("KEY01")).thenReturn(false);
+        when(projectExistenceService.isProjectFoundByName("Any Project"))
+                .thenThrow(new ProjectExistenceServiceException("lookup failed"));
 
         assertThrows(ProjectCreationException.class, () -> sut.build(request, clientApp));
     }
