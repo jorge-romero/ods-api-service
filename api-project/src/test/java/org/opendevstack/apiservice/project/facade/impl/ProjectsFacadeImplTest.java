@@ -30,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -117,6 +118,41 @@ class ProjectsFacadeImplTest {
         verify(projectMapper).toServiceRequest(command);
         verify(automationParametersMapper)
                 .toWorkflowParameters(command, "11111111-1111-1111-1111-111111111111");
+        verify(projectCreationResponseMapper).toSuccessResponse(command, projectResponse);
+    }
+
+    @Test
+    void create_project_with_registrationOnly_returns_success_response_when_automation_is_not_executed() {
+        CreateProjectRequest request = new CreateProjectRequest();
+        request.setRegistrationOnly(true);
+        ClientAppEntity clientApp = ClientAppEntity.builder().clientId(CLIENT_ID).build();
+        ProjectCreationCommand command = new ProjectCreationCommand(
+                "P3RO01", "name", "desc", null, "CI-001", "eu", "x2test", "owner", CLIENT_ID);
+        ProjectRequest serviceRequest = new ProjectRequest();
+        ProjectResponse projectResponse = ProjectResponse.builder()
+                .projectId(UUID.fromString("11111111-1111-1111-1111-111111111111"))
+                .projectKey("P3RO01")
+                .status(Status.RUNNING)
+                .build();
+        CreateProjectResponse apiResponse = new CreateProjectResponse();
+        apiResponse.setStatus("Running");
+        apiResponse.setProjectFlavor("REGULAR");
+
+        when(clientAppService.findByClientId(CLIENT_ID)).thenReturn(clientApp);
+        when(projectCreationCommandBuilder.build(request, clientApp)).thenReturn(command);
+        when(projectMapper.toServiceRequest(command)).thenReturn(serviceRequest);
+        when(projectService.saveProject(serviceRequest)).thenReturn(projectResponse);
+        when(projectCreationResponseMapper.toSuccessResponse(command, projectResponse)).thenReturn(apiResponse);
+
+        CreateProjectResponse result = sut.createProject(request, CLIENT_ID);
+
+        assertEquals("Running", result.getStatus());
+        assertEquals("REGULAR", result.getProjectFlavor());
+        verify(projectCreationCommandBuilder).build(request, clientApp);
+        verify(projectMapper).toServiceRequest(command);
+        verify(automationParametersMapper, never())
+                .toWorkflowParameters(command, "11111111-1111-1111-1111-111111111111");
+        verify(automationPlatformService, never()).executeWorkflow(anyString(), anyMap());
         verify(projectCreationResponseMapper).toSuccessResponse(command, projectResponse);
     }
 

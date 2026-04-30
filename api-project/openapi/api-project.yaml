@@ -1,4 +1,4 @@
-openapi: 3.0.4
+openapi: 3.0.3
 info:
   title: ODS API Server
   description: API documentation for ODS (Open DevStack) API Service
@@ -153,6 +153,10 @@ components:
           type: string
           description: Owner of the project. If x2OdsAccount is provided but owner is missing, error MANDATORY_OWNER (024) is returned.
           pattern: "^[a-z]{1,10}$"
+        registrationOnly:
+          type: boolean
+          description: Indicates whether the project should be only registrated or a proper initialization is required. (Default false)
+          default: false
       oneOf:
         - required: [projectFlavor]
         - required: [configurationItem]

@@ -67,30 +67,57 @@ public class ProjectsFacadeImpl implements ProjectsFacade {
 
         ProjectCreationCommand command = projectCreationCommandBuilder.build(request, clientApp);
 
-        ProjectRequest projectRequest = projectMapper.toServiceRequest(command);
-        projectRequest.setStatus(Status.PENDING);
-        
-        ProjectResponse project = projectService.saveProject(projectRequest);
+        ProjectResponse project;
 
-        String projectId = project.getProjectId().toString();
-        Map<String, Object> workflowParameters = automationParametersMapper.toWorkflowParameters(command, projectId);
-        
-        AutomationExecutionResult automationExecutionResult = automationPlatformService
-                .executeWorkflow(createProjectWorkflow, workflowParameters);
-
-        if (automationExecutionResult.isSuccessful()) {
-            return projectCreationResponseMapper.toSuccessResponse(command, project);
+        if (Boolean.TRUE.equals(request.getRegistrationOnly())) {
+            project = registerProject(command);
         } else {
-            projectRequest.setProjectId(project.getProjectId());
-            projectRequest.setStatus(Status.FAILED);
-            projectService.saveProject(projectRequest);
-            throw new ProjectCreationException("Failed to create project: " 
-                    + automationExecutionResult.getErrorDetails());
-        } 
+            project = createNewProject(command);
+        }
+
+        return projectCreationResponseMapper.toSuccessResponse(command, project);
     }
 
     @Override
     public CreateProjectResponse getProject(String projectKey) {
         return projectMapper.toApiResponse(projectService.getProject(projectKey));
+    }
+
+    private ProjectResponse registerProject(ProjectCreationCommand command) {
+
+        ProjectRequest projectRequest = projectMapper.toServiceRequest(command);
+        projectRequest.setStatus(Status.RUNNING);
+        projectRequest.setProjectFlavor("REGULAR");
+
+        return projectService.saveProject(projectRequest);
+    }
+
+    private ProjectResponse createNewProject(ProjectCreationCommand command) {
+
+        ProjectRequest projectRequest = projectMapper.toServiceRequest(command);
+        projectRequest.setStatus(Status.PENDING);
+
+        ProjectResponse project = projectService.saveProject(projectRequest);
+
+        initializeProject(command, projectRequest, project);
+
+        return project;
+    }
+
+    private void initializeProject(
+            ProjectCreationCommand command, ProjectRequest projectRequest, ProjectResponse project) {
+        String projectId = project.getProjectId().toString();
+        Map<String, Object> workflowParameters = automationParametersMapper.toWorkflowParameters(command, projectId);
+
+        AutomationExecutionResult automationExecutionResult = automationPlatformService
+                .executeWorkflow(createProjectWorkflow, workflowParameters);
+
+        if (!automationExecutionResult.isSuccessful()) {
+            projectRequest.setProjectId(project.getProjectId());
+            projectRequest.setStatus(Status.FAILED);
+            projectService.saveProject(projectRequest);
+            throw new ProjectCreationException("Failed to create project: "
+                    + automationExecutionResult.getErrorDetails());
+        }
     }
 }
