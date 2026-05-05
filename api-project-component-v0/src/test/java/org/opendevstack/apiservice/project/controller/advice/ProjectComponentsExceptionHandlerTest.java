@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.opendevstack.apiservice.project.exception.ComponentAlreadyExistsException;
 import org.opendevstack.apiservice.project.exception.ComponentCreationException;
 import org.opendevstack.apiservice.project.exception.ComponentNotFoundException;
 import org.opendevstack.apiservice.project.model.CreateComponentResponse;
@@ -132,6 +133,20 @@ class ProjectComponentsExceptionHandlerTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getErrorKey()).isEqualTo("003");
         assertThat(response.getBody().getMessage()).isEqualTo("Creation failed");
+    }
+
+    @Test
+    void handle_component_already_exists_exception_returns_conflict() {
+        ComponentAlreadyExistsException exception = new ComponentAlreadyExistsException(
+                "This component name already exists, please choose another name.");
+
+        ResponseEntity<CreateComponentResponse> response = handler.handleComponentAlreadyExistsException(exception, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getHttpStatus()).isEqualTo(HttpStatus.CONFLICT.name());
+        assertThat(response.getBody().getErrorKey()).isEqualTo("006");
+        assertThat(response.getBody().getMessage()).isEqualTo("This component name already exists, please choose another name.");
     }
 
     @Test

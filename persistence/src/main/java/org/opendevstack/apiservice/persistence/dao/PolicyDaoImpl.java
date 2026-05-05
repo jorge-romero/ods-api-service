@@ -41,7 +41,7 @@ public class PolicyDaoImpl implements PolicyDao {
 
     @Override
     public List<PolicyRule> findGlobalByApiDefinitionId(String apiDefinitionId) {
-        return repository.findByApiDefinitionIdAndClientIdIsNull(apiDefinitionId).stream()
+        return repository.findGlobalByApiDefinitionId(apiDefinitionId).stream()
                 .map(this::toDto)
                 .toList();
     }

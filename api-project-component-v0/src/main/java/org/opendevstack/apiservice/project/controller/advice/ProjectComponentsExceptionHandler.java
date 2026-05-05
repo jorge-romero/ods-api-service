@@ -4,9 +4,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.opendevstack.apiservice.project.controller.ComponentsResponseFactory;
 import org.opendevstack.apiservice.project.controller.ProjectComponentsController;
+import org.opendevstack.apiservice.project.exception.ComponentAlreadyExistsException;
+import org.opendevstack.apiservice.project.exception.ComponentBadRequestException;
 import org.opendevstack.apiservice.project.exception.ComponentCreationException;
 import org.opendevstack.apiservice.project.exception.ComponentErrorKey;
 import org.opendevstack.apiservice.project.exception.ComponentNotFoundException;
+import org.opendevstack.apiservice.project.exception.ComponentRetrievalException;
+import org.opendevstack.apiservice.project.model.Component;
 import org.opendevstack.apiservice.project.model.CreateComponentResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -136,6 +140,54 @@ public class ProjectComponentsExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    @ExceptionHandler(ComponentRetrievalException.class)
+    public ResponseEntity<CreateComponentResponse> handleComponentRetrievalException(
+            ComponentRetrievalException ex,
+            HttpServletRequest request) {
+
+        log.error("Component retrieval failed: {}", ex.getMessage(), ex);
+
+        CreateComponentResponse response = ComponentsResponseFactory.internalError(
+                request.getRequestURI(),
+                ex.getMessage(),
+                ComponentErrorKey.INTERNAL_ERROR
+        );
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    @ExceptionHandler(ComponentAlreadyExistsException.class)
+    public ResponseEntity<CreateComponentResponse> handleComponentAlreadyExistsException(
+            ComponentAlreadyExistsException ex,
+            HttpServletRequest request) {
+
+        log.warn("Component already exists: {}", ex.getMessage());
+
+        CreateComponentResponse response = ComponentsResponseFactory.conflict(
+                request.getRequestURI(),
+                ex.getMessage(),
+                ComponentErrorKey.INVALID_PARAMETERS
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    @ExceptionHandler(ComponentBadRequestException.class)
+    public ResponseEntity<CreateComponentResponse> handleComponentBadRequestException(
+            ComponentBadRequestException ex,
+            HttpServletRequest request) {
+
+        log.warn("Bad request from downstream service: {}", ex.getMessage());
+
+        CreateComponentResponse response = ComponentsResponseFactory.unprocessableEntity(
+                request.getRequestURI(),
+                ex.getMessage(),
+                ComponentErrorKey.INVALID_PARAMETERS
+        );
+
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(response);
     }
 
     @ExceptionHandler(Exception.class)

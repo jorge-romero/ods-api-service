@@ -91,7 +91,24 @@ check-maven:
 clean: check-maven
 	@echo "$(BLUE)Cleaning build artifacts...$(NC)"
 	$(MAVEN_WRAPPER) clean
+	@echo "$(BLUE)Removing all target directories across modules...$(NC)"
+	@find . -type d -name target -prune -exec rm -rf {} +
+	@echo "$(BLUE)Removing generated OpenAPI model directories...$(NC)"
+	@find . -type d -path "*/src/main/java/*/model" \
+		! -path "./external-service-aap/src/main/java/org/opendevstack/apiservice/externalservice/aap/model" \
+		! -path "./service-projects/src/main/java/org/opendevstack/apiservice/serviceproject/model" \
+		! -path "./external-service-projects-info-service/src/main/java/org/opendevstack/apiservice/externalservice/projectsinfoservice/model" \
+		! -path "./external-service-marketplace/src/main/java/org/opendevstack/apiservice/externalservice/marketplace/model" \
+		! -path "./external-service-uipath/src/main/java/org/opendevstack/apiservice/externalservice/uipath/model" \
+		-prune -exec rm -rf {} +
 	@echo "$(GREEN)✓ Clean complete$(NC)"
+
+## Remove local Maven cache for org.opendevstack.apiservice
+clean-cache:
+	@echo "$(BLUE)Removing local Maven cache for org.opendevstack.apiservice...$(NC)"
+	@rm -rf "$$HOME/.m2/repository/org/opendevstack/apiservice"
+	@rm -rf "$$HOME/.m2/repositories/org/opendevstack/apiservice"
+	@echo "$(GREEN)✓ Maven cache clean complete$(NC)"
 
 ## Compile the project
 compile: check-java check-maven

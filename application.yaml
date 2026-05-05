@@ -80,6 +80,13 @@ app:
       - /actuator/health
       - /actuator/info
       - /api/v1/projects/*/platforms
+    obo:
+      # Azure AD token endpoint used for On-Behalf-Of token exchange.
+      token-url: ${OBO_TOKEN_URL:https://login.microsoftonline.com/${AZURE_TENANT_ID:}/oauth2/v2.0/token}
+      # Client ID of this application's Azure AD app registration.
+      client-id: ${OBO_CLIENT_ID}
+      # Client secret for OBO exchange. Must be injected via environment variable or secret store.
+      client-secret: ${OBO_CLIENT_SECRET}
 
 # Spring Boot Actuator configuration.
 # Restrict these endpoints in production if they expose operational details.
@@ -278,3 +285,22 @@ externalservices:
   projects-info-service:
     # Base URL of the downstream Projects Info Service consumed by this application.
     base-url: ${PROJECTS_INFO_SERVICE_BASE_URL:http://localhost:8081}
+
+  jira:
+    # Name of the default Jira instance.
+    default-instance: ${JIRA_DEFAULT_INSTANCE:jira}
+    instances:
+      jira:
+        base-url: ${JIRA_JIRA_DEV_BASE_URL:https://jira.example.com}
+        bearer-token: ${JIRA_JIRA_DEV_BEARER_TOKEN:}
+        connection-timeout: ${JIRA_JIRA_DEV_CONNECTION_TIMEOUT:30000}
+        read-timeout: ${JIRA_JIRA_DEV_READ_TIMEOUT:30000}
+        trust-all-certificates: ${JIRA_JIRA_DEV_TRUST_ALL:false}
+
+  marketplace:
+    instances:
+      default:
+        project-components-base-url: ${MARKETPLACE_PROJECT_COMPONENTS_BASE_URL}
+        provisioner-actions-base-url: ${MARKETPLACE_PROVISIONER_ACTIONS_BASE_URL:}
+        obo-scope: ${MARKETPLACE_OBO_SCOPE:}
+        trust-all-certificates: ${MARKETPLACE_TRUST_ALL_CERTS:false}

@@ -1,6 +1,7 @@
 package org.opendevstack.apiservice.project.util;
 
-import org.opendevstack.apiservice.externalservice.marketplace.model.ProjectComponent;
+import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.CatalogItem;
+import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProjectComponentExtendedInfo;
 import org.opendevstack.apiservice.project.model.Component;
 import org.opendevstack.apiservice.project.model.ComponentsStatusDTO;
 import org.opendevstack.apiservice.project.model.CreateComponentRequest;
@@ -25,13 +26,22 @@ public class TestObjectsBuilder {
         return component;
     }
 
-    public static ProjectComponent buildTestMarketplaceComponent() {
-        ProjectComponent component = new ProjectComponent();
-        component.setComponentId(UUID.randomUUID());
-        component.setStatus("RUNNING");
-        component.setCanBeDeleted(false);
+    public static ProjectComponentExtendedInfo buildTestMarketplaceComponent() {
+        ProjectComponentExtendedInfo component = new ProjectComponentExtendedInfo();
+        component.setComponentId(UUID.randomUUID().toString());
+        component.setStatus("CREATING");
         component.setComponentUrl("http://test.component.url");
+        component.setCatalogItemId("cHJvamVjdHMvVEVTVC9yZXBvcy9DYXRhbG9nSXRlbS55YW1s");
+        component.setCatalogItemRef("P2F0PXJlZnMvaGVhZHMvbWFzdGVy");
         return component;
+    }
+
+    public static CatalogItem buildTestCatalogItem() {
+        CatalogItem catalogItem = new CatalogItem();
+        catalogItem.setId(UUID.randomUUID().toString());
+        catalogItem.setTitle("Test Catalog Item");
+        catalogItem.setShortDescription("This is a test catalog item");
+        return catalogItem;
     }
 
     public static CreateComponentRequest buildTestCreateComponentRequest() {

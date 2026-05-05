@@ -1,73 +1,97 @@
 package org.opendevstack.apiservice.project.mapper;
 
-import org.mapstruct.IterableMapping;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Named;
-import org.opendevstack.apiservice.externalservice.marketplace.model.CreateComponentParameter;
-import org.opendevstack.apiservice.externalservice.marketplace.model.ProjectComponent;
+import org.opendevstack.apiservice.externalservice.marketplace.exception.MarketplaceException;
+import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.CatalogItem;
+import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.CatalogItemUserAction;
+import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.CatalogItemUserActionParameter;
+import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProjectComponentExtendedInfo;
+import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProvisionActionParameter;
 import org.opendevstack.apiservice.project.model.Component;
-import org.opendevstack.apiservice.project.model.ComponentsStatusDTO;
 import org.opendevstack.apiservice.project.model.CreateComponentRequest;
 import org.opendevstack.apiservice.project.model.EnvironmentsDTO;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Mapper(componentModel = "spring")
 public interface MarketplaceMapper {
 
-    @Mapping(target = "id", source = "componentId", qualifiedByName = "uuidToString")
-    @Mapping(target = "environment", source = "environment", qualifiedByName = "toEnvironment")
-    @Mapping(target = "status", source = "status", qualifiedByName = "toComponentStatus")
-    @Mapping(target = "params", expression = "java(java.util.Collections.emptyMap())")
-    @Mapping(target = "resultTraceback", ignore = true)
-    Component mapMarketplaceComponentToV0Component(ProjectComponent source);
+    String DEFAULT_PARAMETER_TYPE = "string";
 
-    default List<CreateComponentParameter> mapCreateComponentRequestToCreateComponentParameterList(CreateComponentRequest createComponentRequest) {
-        if (createComponentRequest == null || createComponentRequest.getParams() == null) {
+    default Component mapMarketplaceComponentToV0Component(ProjectComponentExtendedInfo source, CatalogItem catalogItem) throws MarketplaceException {
+        Component component = new Component();
+        component.setId(source.getComponentId());
+        component.setEnvironment(EnvironmentsDTO.DEV); // Env is always DEV so we hardcode it as such
+        component.setRepositoryURL(source.getComponentUrl());
+        component.setComponentType(""); // We agreed to hardcode the type as empty
+        component.setStatus(StatusMap.toOldStatus(source.getStatus()));
+        if (component.getStatus() == null) {
+            throw new MarketplaceException("No status mapping found for status " + source.getStatus());
+        }
+        if (catalogItem != null) {
+            component.setProductId(catalogItem.getId());
+            component.setProductName(catalogItem.getTitle());
+            component.setProductDescription(catalogItem.getShortDescription());
+        }
+
+        if (source.getParameters() != null) {
+            source.getParameters().forEach(
+                    param -> component.putParamsItem(param.getName(), param.getValues())
+            );
+        }
+        return component;
+    }
+
+    default List<ProvisionActionParameter> mapCreateComponentRequestToCreateComponentParameterList(
+            CreateComponentRequest createComponentRequest, CatalogItem catalogItem) {
+        if (createComponentRequest == null) {
             return List.of();
         }
 
-        return mapEntriesToCreateComponentParameterList(createComponentRequest.getParams().entrySet().stream().toList());
+        Map<String, String> parameterTypesByName = buildParameterTypeIndex(catalogItem);
+
+        List<ProvisionActionParameter> parameters = new ArrayList<>();
+        parameters.add(createParameter("component_id", createComponentRequest.getName(), DEFAULT_PARAMETER_TYPE));
+        parameters.add(createParameter("catalog_item_slug", createComponentRequest.getProductId(), DEFAULT_PARAMETER_TYPE));
+
+        if (createComponentRequest.getParams() != null && !createComponentRequest.getParams().isEmpty()) {
+            createComponentRequest.getParams().forEach((name, value) -> {
+                String type = parameterTypesByName.getOrDefault(name, DEFAULT_PARAMETER_TYPE);
+                parameters.add(createParameter(name, value, type));
+            });
+        }
+
+        return parameters;
     }
 
-    @IterableMapping(qualifiedByName = "toCreateComponentParameter")
-    List<CreateComponentParameter> mapEntriesToCreateComponentParameterList(List<Map.Entry<String, Object>> entries);
-
-    @Named("toCreateComponentParameter")
-    @Mapping(target = "name", source = "key")
-    @Mapping(target = "type", constant = "string")
-    @Mapping(target = "value", expression = "java(String.valueOf(entry.getValue()))")
-    CreateComponentParameter toCreateComponentParameter(Map.Entry<String, Object> entry);
-
-    @Named("uuidToString")
-    default String uuidToString(UUID sourceId) {
-        return sourceId != null ? sourceId.toString() : null;
+    default ProvisionActionParameter createParameter(String name, Object value, String type) {
+        return new ProvisionActionParameter().name(name).type(type).value(value);
     }
 
-    @Named("toComponentStatus")
-    default ComponentsStatusDTO toComponentStatus(String sourceStatus) {
-        if (sourceStatus == null || sourceStatus.isBlank()) {
-            return null;
+    /**
+     * Builds a map of parameter name -> type from the catalog item user actions.
+     * The type comes from the {@link CatalogItemUserActionParameter#getType()} value
+     * (e.g. {@code string}, {@code boolean}, {@code multiplelist}, {@code singlelist}, ...).
+     */
+    private static Map<String, String> buildParameterTypeIndex(CatalogItem catalogItem) {
+        Map<String, String> index = new HashMap<>();
+        if (catalogItem == null || catalogItem.getUserActions() == null) {
+            return index;
         }
-        try {
-            return ComponentsStatusDTO.fromValue(sourceStatus);
-        } catch (IllegalArgumentException ex) {
-            return null;
+        for (CatalogItemUserAction action : catalogItem.getUserActions()) {
+            if (action == null || action.getParameters() == null) {
+                continue;
+            }
+            for (CatalogItemUserActionParameter param : action.getParameters()) {
+                if (param == null || param.getName() == null || param.getType() == null) {
+                    continue;
+                }
+                index.putIfAbsent(param.getName(), param.getType());
+            }
         }
-    }
-
-    @Named("toEnvironment")
-    default EnvironmentsDTO toEnvironment(String sourceEnv) {
-        if (sourceEnv == null || sourceEnv.isBlank()) {
-            return null;
-        }
-        try {
-            return EnvironmentsDTO.fromValue(sourceEnv);
-        } catch (IllegalArgumentException ex) {
-            return null;
-        }
+        return index;
     }
 }

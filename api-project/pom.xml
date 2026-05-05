@@ -57,6 +57,12 @@
             <artifactId>persistence</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>core-security</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

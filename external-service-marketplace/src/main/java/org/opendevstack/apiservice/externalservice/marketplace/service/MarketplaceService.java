@@ -1,15 +1,44 @@
 package org.opendevstack.apiservice.externalservice.marketplace.service;
 
 import org.opendevstack.apiservice.externalservice.api.ExternalService;
-import org.opendevstack.apiservice.externalservice.marketplace.model.CreateComponentParameter;
-import org.opendevstack.apiservice.externalservice.marketplace.model.ProjectComponent;
+import org.opendevstack.apiservice.externalservice.marketplace.exception.MarketplaceException;
+import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.CatalogItem;
+import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProjectComponentExtendedInfo;
+import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProvisionActionParameter;
 
 import java.util.List;
+import java.util.Set;
 
 public interface MarketplaceService extends ExternalService {
 
+    Set<String> getAvailableInstances();
 
-    ProjectComponent getProjectComponent(String projectId, String componentId);
+    boolean hasInstance(String instanceName);
 
-    ProjectComponent createProjectComponent(String projectId, List<CreateComponentParameter> params);
+    String getDefaultInstance() throws MarketplaceException;
+
+    ProjectComponentExtendedInfo getProjectComponent(String projectId, String componentId) throws MarketplaceException;
+
+    ProjectComponentExtendedInfo getProjectComponent(String instanceName, String projectId, String componentId) throws MarketplaceException;
+
+    CatalogItem getCatalogItem(String catalogItemId) throws MarketplaceException;
+
+    CatalogItem getCatalogItem(String instanceName, String catalogItemId) throws MarketplaceException;
+
+    CatalogItem getCatalogItemBySlug(String slug) throws MarketplaceException;
+
+    CatalogItem getCatalogItemBySlug(String instanceName, String slug) throws MarketplaceException;
+
+    boolean provisionProjectComponent(String projectId, List<ProvisionActionParameter> params) throws MarketplaceException;
+
+    boolean provisionProjectComponent(String instanceName, String projectId, List<ProvisionActionParameter> params) throws MarketplaceException;
+
+    boolean deleteProjectComponent(String projectId, String componentId) throws MarketplaceException;
+
+    boolean deleteProjectComponent(String instanceName, String projectId, String componentId) throws MarketplaceException;
+
+    void registerProjectComponent(String projectId, String componentId) throws MarketplaceException;
+
+    void registerProjectComponent(String instanceName, String projectId, String componentId) throws MarketplaceException;
+
 }

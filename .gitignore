@@ -97,5 +97,7 @@ api-project/src/main/java/org/opendevstack/apiservice/project/api
 api-project/src/main/java/org/opendevstack/apiservice/project/model
 api-project-component-v0/src/main/java/org/opendevstack/apiservice/project/api
 api-project-component-v0/src/main/java/org/opendevstack/apiservice/project/model
+external-service-marketplace/src/main/java/org/opendevstack/apiservice/externalservice/marketplace/openapi
+
 **/.openapi-generator
 

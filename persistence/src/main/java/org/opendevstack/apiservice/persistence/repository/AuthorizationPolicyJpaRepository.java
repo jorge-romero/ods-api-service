@@ -1,6 +1,8 @@
 package org.opendevstack.apiservice.persistence.repository;
 
 import org.opendevstack.apiservice.persistence.entity.AuthorizationPolicyEntity;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -12,5 +14,11 @@ public interface AuthorizationPolicyJpaRepository extends JpaRepository<Authoriz
 
     List<AuthorizationPolicyEntity> findByApiDefinitionIdAndClientId(String apiDefinitionId, String clientId);
 
-    List<AuthorizationPolicyEntity> findByApiDefinitionIdAndClientIdIsNull(String apiDefinitionId);
+    @Query("""
+                        SELECT p
+                        FROM AuthorizationPolicyEntity p
+                        WHERE p.apiDefinitionId = :apiDefinitionId
+                            AND (p.clientId IS NULL OR TRIM(p.clientId) = '')
+                        """)
+    List<AuthorizationPolicyEntity> findGlobalByApiDefinitionId(@Param("apiDefinitionId") String apiDefinitionId);
 }

@@ -90,7 +90,6 @@ paths:
           description: Component id
           schema:
             type: string
-            format: uuid
       responses:
         '200':
           description: Component information
