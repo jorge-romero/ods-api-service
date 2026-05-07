@@ -15,7 +15,6 @@ import org.opendevstack.apiservice.externalservice.marketplace.openapi.api.Provi
 import org.opendevstack.apiservice.externalservice.marketplace.openapi.api.ProvisionerActionsApi;
 import org.opendevstack.apiservice.externalservice.marketplace.openapi.api.ProvisionerHealthApi;
 import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.CatalogItem;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.CreateIncidentAction;
 import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.GetCatalogHealth200Response;
 import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.GetProvisionerHealth200Response;
 import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.NotifyProvisioningStatusUpdateRequest;
@@ -23,6 +22,7 @@ import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.Pro
 import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProvisionAction;
 import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProvisionActionParameter;
 import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProvisionActionResponse;
+import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProvisioningDeleteRequest;
 import org.opendevstack.apiservice.externalservice.marketplace.service.MarketplaceService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -140,9 +140,9 @@ public class MarketplaceServiceImpl implements MarketplaceService {
     }
 
     @Override
-    public boolean provisionProjectComponent(String instanceName, 
+    public boolean provisionProjectComponent(String instanceName,
                                              String projectId,
-                                             List<ProvisionActionParameter> params) 
+                                             List<ProvisionActionParameter> params)
             throws MarketplaceException {
         log.debug("Marketplace service PROVISION component for project {}: ", projectId);
         try {
@@ -177,24 +177,24 @@ public class MarketplaceServiceImpl implements MarketplaceService {
     }
 
     @Override
-    public boolean deleteProjectComponent(String projectId, String componentId) throws MarketplaceException {
-        return deleteProjectComponent(getDefaultInstance(), projectId, componentId);
+    public void deleteProjectComponent(String projectId, String componentId) throws MarketplaceException {
+        deleteProjectComponent(getDefaultInstance(), projectId, componentId);
     }
 
     @Override
-    public boolean deleteProjectComponent(String instanceName, String projectId, String componentId) throws MarketplaceException {
+    public void deleteProjectComponent(String instanceName, String projectId, String componentId) throws MarketplaceException {
         log.debug("Marketplace service DELETE component {} for project {}: ", componentId, projectId);
         try {
-            MarketplaceApiClient marketplaceClient = getOboAuthenticatedClient(instanceName);
+            MarketplaceApiClient marketplaceClient = clientFactory.getClient(instanceName);
             ApiClient apiClient = marketplaceClient.getApiClient();
 
             ProvisionResultsApi provisionResultsApi = new ProvisionResultsApi(apiClient);
             apiClient.setBasePath(marketplaceClient.getConfig().getProvisionerActionsBaseUrl());
             log.debug("Api client base path: {}", apiClient.getBasePath());
 
-            CreateIncidentAction deleteAction = new CreateIncidentAction();
-            ProvisionActionResponse response = provisionResultsApi.createIncident(projectId, componentId, deleteAction);
-            return !Boolean.TRUE.equals(response.getFailed());
+            ProvisioningDeleteRequest provisioningDeleteRequest = new ProvisioningDeleteRequest();
+            provisioningDeleteRequest.setComponentId(componentId);
+            provisionResultsApi.deleteProvisioningStatus(projectId, provisioningDeleteRequest);
         } catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
             throw new MarketplaceException(
                     String.format("Access denied when deleting project component '%s' in project '%s' and instance '%s'",

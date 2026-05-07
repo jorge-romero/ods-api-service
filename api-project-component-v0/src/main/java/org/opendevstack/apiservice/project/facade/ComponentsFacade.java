@@ -12,6 +12,7 @@ import org.opendevstack.apiservice.project.exception.CatalogItemNotFoundExceptio
 import org.opendevstack.apiservice.project.exception.ComponentAlreadyExistsException;
 import org.opendevstack.apiservice.project.exception.ComponentBadRequestException;
 import org.opendevstack.apiservice.project.exception.ComponentCreationException;
+import org.opendevstack.apiservice.project.exception.ComponentDeletionException;
 import org.opendevstack.apiservice.project.exception.ComponentNotFoundException;
 import org.opendevstack.apiservice.project.exception.ComponentRetrievalException;
 import org.opendevstack.apiservice.project.mapper.MarketplaceMapper;
@@ -144,13 +145,34 @@ public class ComponentsFacade {
         return throwable.getMessage();
     }
 
-    public Boolean deleteProjectComponent(String projectId, String componentId) {
+    public void deleteProjectComponent(String projectId, String componentId) {
         try {
-            return marketplaceExternalService.deleteProjectComponent(projectId, componentId);
+            marketplaceExternalService.deleteProjectComponent(projectId, componentId);
+            log.info("Successfully deleted component '{}' for project '{}'", componentId, projectId);
         } catch (MarketplaceException e) {
-            log.error("Failed to delete component with id {} for project with id {}", componentId, projectId, e);
-            return false;
+            log.error("Failed to delete component '{}' for project '{}': {}", componentId, projectId, e.getMessage(), e);
+            // Check if it's an access denied error
+            if (isAccessDeniedCause(e)) {
+                throw new ComponentDeletionException(
+                        String.format("Access denied when deleting component '%s' from project '%s'", componentId, projectId), e);
+            }
+            // Generic deletion failure
+            throw new ComponentDeletionException(
+                    String.format("Failed to delete component '%s' for project '%s': %s", componentId, projectId, e.getMessage()), e
+            );
         }
+    }
+
+    private boolean isAccessDeniedCause(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current instanceof HttpClientErrorException.Unauthorized
+                    || current instanceof HttpClientErrorException.Forbidden) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     public boolean registerProjectComponent(String projectId, String componentId) {

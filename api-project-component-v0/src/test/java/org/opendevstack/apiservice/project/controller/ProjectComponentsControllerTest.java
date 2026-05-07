@@ -107,4 +107,5 @@ class ProjectComponentsControllerTest {
                 .hasMessage("Component '" + componentId + "' not found for project 'projectId'");
         verify(componentsFacade).getProjectComponent(projectId, componentId);
     }
+
 }

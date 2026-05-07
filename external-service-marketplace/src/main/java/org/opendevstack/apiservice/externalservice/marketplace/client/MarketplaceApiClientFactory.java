@@ -34,7 +34,7 @@ public class MarketplaceApiClientFactory {
      * @param restTemplateBuilder RestTemplate builder for creating HTTP clients
      */
     public MarketplaceApiClientFactory(MarketplaceServiceConfig configuration,
-                                RestTemplateBuilder restTemplateBuilder) {
+                                       RestTemplateBuilder restTemplateBuilder) {
         this.configuration = configuration;
         this.restTemplateBuilder = restTemplateBuilder;
 
@@ -70,7 +70,7 @@ public class MarketplaceApiClientFactory {
 
     /**
      * Get a {@link MarketplaceApiClient} for a specific instance.
-     * If {@code instanceName} is {@code null} or blank, this method will throw a {@link MarketplaceException} 
+     * If {@code instanceName} is {@code null} or blank, this method will throw a {@link MarketplaceException}
      * to avoid ambiguity. The caller should explicitly call {@link #getClient()} to get the default instance client 
      * in that case.
      *

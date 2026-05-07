@@ -1,0 +1,66 @@
+openapi: 3.0.3
+info:
+  title: ODS API Server
+  description: API documentation for ODS (Open DevStack) API Service
+  contact:
+    name: ODS Team
+  version: v0.0.1
+servers:
+  - url: http://{baseurl}/api/pub/v1
+    variables:
+      baseurl:
+        default: localhost:8080
+        description: Development environment
+tags:
+  - name: Project Components Internal
+    description: API for managing project components with extended methods
+
+paths:
+  /projects/{projectId}/components/{componentId}:
+    delete:
+      tags:
+        - Project Components Internal
+      summary: Delete component information
+      operationId: deleteProjectComponent
+      description: Deletes a specific component
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project key
+          schema:
+            type: string
+            pattern: "^[A-Z]{2}[A-Z0-9]{1,8}$"
+            minLength: 3
+            maxLength: 10
+        - name: componentId
+          in: path
+          required: true
+          description: Component id
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 52
+            pattern: "^[a-z]+(-?[a-z0-9]+)*$"
+      responses:
+        "204":
+          description: Project component properly deleted or no component found for the provided componentId.
+        "400":
+          description: Bad request.
+        "401":
+          description: Invalid credentials on the request.
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+        "500":
+          description: Server error.
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+

@@ -186,7 +186,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <openapiNormalizer>FILTER=operationId:triggerProvisionAction|notifyProvisioningStatusUpdate|createIncident|getProvisionerHealth</openapiNormalizer>
+                            <openapiNormalizer>FILTER=operationId:triggerProvisionAction|notifyProvisioningStatusUpdate|deleteProvisioningStatus|getProvisionerHealth</openapiNormalizer>
                             <generatorName>java</generatorName>
                             <output>${project.basedir}</output>
                             <library>resttemplate</library>

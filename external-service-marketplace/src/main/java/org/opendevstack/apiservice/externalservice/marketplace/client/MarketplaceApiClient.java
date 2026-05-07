@@ -37,6 +37,12 @@ public class MarketplaceApiClient {
         // Initialize the generated ApiClient
         this.apiClient = new ApiClient(restTemplate);
 
+        if (config.getUsername() != null && config.getPassword() != null) {
+            this.apiClient.setUsername(config.getUsername());
+            this.apiClient.setPassword(config.getPassword());
+            log.info("MarketplaceApiClient for instance '{}' uses basic authentication", instanceName);
+        }
+
         log.info("MarketplaceApiClient initialized for instance '{}'", instanceName);
     }
 

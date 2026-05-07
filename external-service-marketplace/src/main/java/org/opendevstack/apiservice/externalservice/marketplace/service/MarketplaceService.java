@@ -33,9 +33,9 @@ public interface MarketplaceService extends ExternalService {
 
     boolean provisionProjectComponent(String instanceName, String projectId, List<ProvisionActionParameter> params) throws MarketplaceException;
 
-    boolean deleteProjectComponent(String projectId, String componentId) throws MarketplaceException;
+    void deleteProjectComponent(String projectId, String componentId) throws MarketplaceException;
 
-    boolean deleteProjectComponent(String instanceName, String projectId, String componentId) throws MarketplaceException;
+    void deleteProjectComponent(String instanceName, String projectId, String componentId) throws MarketplaceException;
 
     void registerProjectComponent(String projectId, String componentId) throws MarketplaceException;
 
