@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.jackson.nullable.JsonNullableModule;
+import org.opendevstack.apiservice.core.security.util.Base64Operations;
 import org.opendevstack.apiservice.externalservice.marketplace.config.MarketplaceInstanceConfig;
 import org.opendevstack.apiservice.externalservice.marketplace.openapi.ApiClient;
 import org.opendevstack.apiservice.externalservice.marketplace.openapi.auth.HttpBearerAuth;
@@ -39,7 +40,7 @@ public class MarketplaceApiClient {
 
         if (config.getUsername() != null && config.getPassword() != null) {
             this.apiClient.setUsername(config.getUsername());
-            this.apiClient.setPassword(config.getPassword());
+            this.apiClient.setPassword(Base64Operations.decode(config.getPassword()));
             log.info("MarketplaceApiClient for instance '{}' uses basic authentication", instanceName);
         }
 
