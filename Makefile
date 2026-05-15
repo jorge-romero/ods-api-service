@@ -406,6 +406,7 @@ db-port-forward:
 	@echo "$(YELLOW)Press Ctrl+C to stop the tunnel$(NC)"
 	kubectl port-forward \
 	  --namespace $(NAMESPACE) \
+		--address 0.0.0.0 \
 	  service/$(DB_K8S_SERVICE) \
 	  $(DB_PF_LOCAL_PORT):$(DB_PF_REMOTE_PORT)
 
