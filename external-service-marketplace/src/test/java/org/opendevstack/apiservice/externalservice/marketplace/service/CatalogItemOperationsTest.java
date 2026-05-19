@@ -1,7 +1,7 @@
 package org.opendevstack.apiservice.externalservice.marketplace.service;
 
 import org.junit.jupiter.api.Test;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProjectComponentExtendedInfo;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentExtendedInfo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

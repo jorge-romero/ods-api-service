@@ -15,6 +15,11 @@ public class MarketplaceInstanceConfig {
     private String provisionerActionsBaseUrl;
 
     /**
+     * The Bitbucket base URL of the Marketplace project
+     */
+    private String bitbucketBaseUrl;
+
+    /**
      * The username used for basic auth
      */
     private String username;

@@ -2,10 +2,11 @@ package org.opendevstack.apiservice.project.mapper;
 
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.CatalogItem;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.CatalogItemUserAction;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.CatalogItemUserActionParameter;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProvisionActionParameter;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.CatalogItem;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.CatalogItemUserAction;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.CatalogItemUserActionParameter;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisionActionParameter;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisioningStatusUpdateRequestAllOfParameters;
 import org.opendevstack.apiservice.project.model.CreateComponentRequest;
 
 import java.util.List;
@@ -85,6 +86,94 @@ class MarketplaceMapperTest {
     @Test
     void mapCreateComponentRequestToCreateComponentParameterList_returnsEmptyWhenRequestNull() {
         assertThat(mapper.mapCreateComponentRequestToCreateComponentParameterList(null, null)).isEmpty();
+    }
+
+    // -------------------------------------------------------------------------
+    // mapCreateComponentRequestToRegisterComponentParameterList
+    // -------------------------------------------------------------------------
+
+    @Test
+    void mapCreateComponentRequestToRegisterComponentParameterList_maps_string_values_correctly() {
+        CreateComponentRequest request = new CreateComponentRequest();
+        request.setName("test-component");
+        request.setProductId("some-slug");
+        request.setParams(Map.of("my_param", "my_value"));
+
+        List<ProvisioningStatusUpdateRequestAllOfParameters> result =
+                mapper.mapCreateComponentRequestToRegisterComponentParameterList(request);
+
+        assertThat(result).hasSize(1);
+        ProvisioningStatusUpdateRequestAllOfParameters param =
+                result.stream().filter(p -> "my_param".equals(p.getName())).findFirst().orElseThrow();
+        assertThat(param.getValues()).containsExactly("my_value");
+    }
+
+    @Test
+    void mapCreateComponentRequestToRegisterComponentParameterList_maps_list_values_correctly() {
+        CreateComponentRequest request = new CreateComponentRequest();
+        request.setName("test-component");
+        request.setProductId("some-slug");
+        List<String> listValue = List.of("value1", "value2", "value3");
+        request.setParams(Map.of("list_param", listValue));
+
+        List<ProvisioningStatusUpdateRequestAllOfParameters> result =
+                mapper.mapCreateComponentRequestToRegisterComponentParameterList(request);
+
+        assertThat(result).hasSize(1);
+        ProvisioningStatusUpdateRequestAllOfParameters param =
+                result.stream().filter(p -> "list_param".equals(p.getName())).findFirst().orElseThrow();
+        assertThat(param.getValues()).containsExactlyInAnyOrder("value1", "value2", "value3");
+    }
+
+    @Test
+    void mapCreateComponentRequestToRegisterComponentParameterList_maps_non_string_value_to_string() {
+        CreateComponentRequest request = new CreateComponentRequest();
+        request.setName("test-component");
+        request.setProductId("some-slug");
+        request.setParams(Map.of("bool_param", true, "int_param", 42));
+
+        List<ProvisioningStatusUpdateRequestAllOfParameters> result =
+                mapper.mapCreateComponentRequestToRegisterComponentParameterList(request);
+
+        assertThat(result).hasSize(2);
+        ProvisioningStatusUpdateRequestAllOfParameters boolParam =
+                result.stream().filter(p -> "bool_param".equals(p.getName())).findFirst().orElseThrow();
+        assertThat(boolParam.getValues()).containsExactly("true");
+
+        ProvisioningStatusUpdateRequestAllOfParameters intParam =
+                result.stream().filter(p -> "int_param".equals(p.getName())).findFirst().orElseThrow();
+        assertThat(intParam.getValues()).containsExactly("42");
+    }
+
+    @Test
+    void mapCreateComponentRequestToRegisterComponentParameterList_maps_null_value_to_empty_string_list() {
+        CreateComponentRequest request = new CreateComponentRequest();
+        request.setName("test-component");
+        request.setProductId("some-slug");
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("null_param", null);
+        request.setParams(params);
+
+        List<ProvisioningStatusUpdateRequestAllOfParameters> result =
+                mapper.mapCreateComponentRequestToRegisterComponentParameterList(request);
+
+        assertThat(result).hasSize(1);
+        ProvisioningStatusUpdateRequestAllOfParameters param =
+                result.stream().filter(p -> "null_param".equals(p.getName())).findFirst().orElseThrow();
+        assertThat(param.getValues()).containsExactly("");
+    }
+
+    @Test
+    void mapCreateComponentRequestToRegisterComponentParameterList_returns_empty_list_when_params_null() {
+        CreateComponentRequest request = new CreateComponentRequest();
+        request.setName("test-component");
+        request.setProductId("some-slug");
+        request.setParams(null);
+
+        List<ProvisioningStatusUpdateRequestAllOfParameters> result =
+                mapper.mapCreateComponentRequestToRegisterComponentParameterList(request);
+
+        assertThat(result).isEmpty();
     }
 
     private static CatalogItemUserAction buildProvisionAction(CatalogItemUserActionParameter... params) {

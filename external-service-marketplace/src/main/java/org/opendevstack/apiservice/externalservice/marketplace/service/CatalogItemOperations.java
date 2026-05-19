@@ -1,6 +1,6 @@
 package org.opendevstack.apiservice.externalservice.marketplace.service;
 
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProjectComponentExtendedInfo;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentExtendedInfo;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;

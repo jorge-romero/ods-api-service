@@ -2,9 +2,10 @@ package org.opendevstack.apiservice.externalservice.marketplace.service;
 
 import org.opendevstack.apiservice.externalservice.api.ExternalService;
 import org.opendevstack.apiservice.externalservice.marketplace.exception.MarketplaceException;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.CatalogItem;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProjectComponentExtendedInfo;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProvisionActionParameter;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.CatalogItem;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentExtendedInfo;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisionActionParameter;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisioningStatusUpdateRequestAllOfParameters;
 
 import java.util.List;
 import java.util.Set;
@@ -37,8 +38,8 @@ public interface MarketplaceService extends ExternalService {
 
     void deleteProjectComponent(String instanceName, String projectId, String componentId) throws MarketplaceException;
 
-    void registerProjectComponent(String projectId, String componentId) throws MarketplaceException;
+    void registerProjectComponent(String projectId, String componentId, String catalogItemSlug, List<ProvisioningStatusUpdateRequestAllOfParameters> params) throws MarketplaceException;
 
-    void registerProjectComponent(String instanceName, String projectId, String componentId) throws MarketplaceException;
+    void registerProjectComponent(String instanceName, String projectId, String componentId, String catalogItemSlug, List<ProvisioningStatusUpdateRequestAllOfParameters> params) throws MarketplaceException;
 
 }

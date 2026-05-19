@@ -9,6 +9,7 @@ import org.mockito.MockitoAnnotations;
 import org.opendevstack.apiservice.project.exception.ComponentAlreadyExistsException;
 import org.opendevstack.apiservice.project.exception.ComponentCreationException;
 import org.opendevstack.apiservice.project.exception.ComponentNotFoundException;
+import org.opendevstack.apiservice.project.exception.ComponentRegistrationException;
 import org.opendevstack.apiservice.project.model.CreateComponentResponse;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
@@ -147,6 +148,20 @@ class ProjectComponentsExceptionHandlerTest {
         assertThat(response.getBody().getHttpStatus()).isEqualTo(HttpStatus.CONFLICT.name());
         assertThat(response.getBody().getErrorKey()).isEqualTo("006");
         assertThat(response.getBody().getMessage()).isEqualTo("This component name already exists, please choose another name.");
+    }
+
+    @Test
+    void handle_component_registration_exception_returns_internal_server_error() {
+        ComponentRegistrationException exception = new ComponentRegistrationException("Registration failed");
+
+        ResponseEntity<CreateComponentResponse> response = handler.handleComponentRegisterException(exception, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.name());
+        assertThat(response.getBody().getErrorKey()).isEqualTo("003");
+        assertThat(response.getBody().getMessage()).isEqualTo("Registration failed");
+        assertThat(response.getBody().getPath()).isEqualTo("/api/pub/v0/projects/test-project/components/");
     }
 
     @Test

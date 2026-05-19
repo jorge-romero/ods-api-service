@@ -10,6 +10,7 @@ import org.opendevstack.apiservice.project.exception.ComponentCreationException;
 import org.opendevstack.apiservice.project.exception.ComponentDeletionException;
 import org.opendevstack.apiservice.project.exception.ComponentErrorKey;
 import org.opendevstack.apiservice.project.exception.ComponentNotFoundException;
+import org.opendevstack.apiservice.project.exception.ComponentRegistrationException;
 import org.opendevstack.apiservice.project.exception.ComponentRetrievalException;
 import org.opendevstack.apiservice.project.model.CreateComponentResponse;
 import org.springframework.http.HttpStatus;
@@ -132,6 +133,22 @@ public class ProjectComponentsExceptionHandler {
             HttpServletRequest request) {
 
         log.error("Component creation failed: {}", ex.getMessage(), ex);
+
+        CreateComponentResponse response = ComponentsResponseFactory.internalError(
+                request.getRequestURI(),
+                ex.getMessage(),
+                ComponentErrorKey.INTERNAL_ERROR
+        );
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    @ExceptionHandler(ComponentRegistrationException.class)
+    public ResponseEntity<CreateComponentResponse> handleComponentRegisterException(
+            ComponentRegistrationException ex,
+            HttpServletRequest request) {
+
+        log.error("Component registration failed: {}", ex.getMessage(), ex);
 
         CreateComponentResponse response = ComponentsResponseFactory.internalError(
                 request.getRequestURI(),

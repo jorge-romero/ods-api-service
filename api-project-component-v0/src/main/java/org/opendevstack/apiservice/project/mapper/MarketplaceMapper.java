@@ -2,11 +2,12 @@ package org.opendevstack.apiservice.project.mapper;
 
 import org.mapstruct.Mapper;
 import org.opendevstack.apiservice.externalservice.marketplace.exception.MarketplaceException;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.CatalogItem;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.CatalogItemUserAction;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.CatalogItemUserActionParameter;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProjectComponentExtendedInfo;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProvisionActionParameter;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.CatalogItem;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.CatalogItemUserAction;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.CatalogItemUserActionParameter;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentExtendedInfo;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisionActionParameter;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisioningStatusUpdateRequestAllOfParameters;
 import org.opendevstack.apiservice.project.model.Component;
 import org.opendevstack.apiservice.project.model.CreateComponentRequest;
 import org.opendevstack.apiservice.project.model.EnvironmentsDTO;
@@ -67,8 +68,38 @@ public interface MarketplaceMapper {
         return parameters;
     }
 
+    default List<ProvisioningStatusUpdateRequestAllOfParameters> mapCreateComponentRequestToRegisterComponentParameterList(
+            CreateComponentRequest createComponentRequest) {
+        if (createComponentRequest == null) {
+            return List.of();
+        }
+
+        List<ProvisioningStatusUpdateRequestAllOfParameters> parameters = new ArrayList<>();
+        if (createComponentRequest.getParams() != null && !createComponentRequest.getParams().isEmpty()) {
+            createComponentRequest.getParams().forEach((name, value) -> {
+                parameters.add(createRegisterParameter(name, value));
+            });
+        }
+
+        return parameters;
+    }
+
     default ProvisionActionParameter createParameter(String name, Object value, String type) {
         return new ProvisionActionParameter().name(name).type(type).value(value);
+    }
+
+    default ProvisioningStatusUpdateRequestAllOfParameters createRegisterParameter(String name, Object value) {
+        List<String> values;
+        if (value == null) {
+            values = List.of("");
+        } else if (value instanceof List<?> list) {
+            values = list.stream()
+                    .map(Object::toString)
+                    .toList();
+        } else {
+            values = List.of(value.toString());
+        }
+        return new ProvisioningStatusUpdateRequestAllOfParameters().name(name).values(values);
     }
 
     /**

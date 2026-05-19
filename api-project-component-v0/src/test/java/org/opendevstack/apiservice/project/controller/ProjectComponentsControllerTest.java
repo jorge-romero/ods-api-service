@@ -67,6 +67,25 @@ class ProjectComponentsControllerTest {
     }
 
     @Test
+    void create_project_component_with_register_only_returns_ok_with_component_name_in_path() {
+        String projectId = "testProjectId";
+        CreateComponentRequest request = buildTestCreateComponentRequest(); // name = "testcomponent"
+        request.setRegisterOnly(Boolean.TRUE);
+
+        doNothing().when(componentsFacade).registerProjectComponent(eq(projectId), eq(request));
+
+        ResponseEntity<CreateComponentResponse> response = projectComponentsController.createProjectComponent(projectId, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getHttpStatus()).isEqualTo(HttpStatus.OK.name());
+        assertThat(response.getBody().getErrorKey()).isEqualTo("000");
+        assertThat(response.getBody().getMessage()).isEqualTo("Component created");
+        assertThat(response.getBody().getPath()).isEqualTo("/api/pub/v0/projects/testProjectId/components/testcomponent");
+        verify(componentsFacade).registerProjectComponent(projectId, request);
+    }
+
+    @Test
     void create_project_component_propagates_exception_when_facade_throws_exception() {
         String projectId = "testProjectId";
         CreateComponentRequest request = buildTestCreateComponentRequest();
@@ -77,6 +96,38 @@ class ProjectComponentsControllerTest {
         assertThatThrownBy(() -> projectComponentsController.createProjectComponent(projectId, request))
             .isInstanceOf(RuntimeException.class)
             .hasMessage("boom");
+        verify(componentsFacade).provisionProjectComponent(projectId, request);
+    }
+
+    @Test
+    void create_project_component_with_register_only_propagates_exception_when_facade_throws_exception() {
+        String projectId = "testProjectId";
+        CreateComponentRequest request = buildTestCreateComponentRequest();
+        request.setRegisterOnly(Boolean.TRUE);
+
+        org.mockito.Mockito.doThrow(new RuntimeException("boom"))
+                .when(componentsFacade).registerProjectComponent(eq(projectId), eq(request));
+
+        assertThatThrownBy(() -> projectComponentsController.createProjectComponent(projectId, request))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("boom");
+        verify(componentsFacade).registerProjectComponent(projectId, request);
+    }
+
+    @Test
+    void create_project_component_with_register_only_false_delegates_to_provision_project_component() {
+        String projectId = "testProjectId";
+        CreateComponentRequest request = buildTestCreateComponentRequest();
+        request.setRegisterOnly(Boolean.FALSE);
+
+        doNothing().when(componentsFacade).provisionProjectComponent(eq(projectId), any(CreateComponentRequest.class));
+
+        ResponseEntity<CreateComponentResponse> response = projectComponentsController.createProjectComponent(projectId, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getMessage()).isEqualTo("Component created");
+        assertThat(response.getBody().getPath()).isEqualTo("/api/pub/v0/projects/testProjectId/components/testcomponent");
         verify(componentsFacade).provisionProjectComponent(projectId, request);
     }
 

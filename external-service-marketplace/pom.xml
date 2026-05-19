@@ -152,12 +152,12 @@
                         <configuration>
                             <openapiNormalizer>FILTER=operationId:getProjectComponents|getProjectComponentById|getCatalogItemById|getCatalogItemBySlug|getCatalogHealth</openapiNormalizer>
                             <generatorName>java</generatorName>
-                            <output>${project.basedir}</output>
+                            <output>${project.basedir}/target/generated-sources/openapi</output>
                             <library>resttemplate</library>
                             <inputSpec>${project.basedir}/openapi/openapi-component_catalog-v1.0.0.yaml</inputSpec>
-                            <apiPackage>org.opendevstack.apiservice.externalservice.marketplace.openapi.api</apiPackage>
-                            <modelPackage>org.opendevstack.apiservice.externalservice.marketplace.openapi.model</modelPackage>
-                            <invokerPackage>org.opendevstack.apiservice.externalservice.marketplace.openapi</invokerPackage>
+                            <apiPackage>org.opendevstack.apiservice.externalservice.marketplace.client.api</apiPackage>
+                            <modelPackage>org.opendevstack.apiservice.externalservice.marketplace.client.model</modelPackage>
+                            <invokerPackage>org.opendevstack.apiservice.externalservice.marketplace.client</invokerPackage>
                             <skipOverwrite>false</skipOverwrite>
                             <generateApis>true</generateApis>
                             <generateModels>true</generateModels>
@@ -186,14 +186,14 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <openapiNormalizer>FILTER=operationId:triggerProvisionAction|notifyProvisioningStatusUpdate|deleteProvisioningStatus|getProvisionerHealth</openapiNormalizer>
+                            <openapiNormalizer>FILTER=operationId:triggerProvisionAction|notifyProvisioningStatusUpdate|deleteProjectComponent|getProvisionerHealth</openapiNormalizer>
                             <generatorName>java</generatorName>
-                            <output>${project.basedir}</output>
+                            <output>${project.basedir}/target/generated-sources/openapi</output>
                             <library>resttemplate</library>
                             <inputSpec>${project.basedir}/openapi/openapi-component_provisioner-v1.0.0.yaml</inputSpec>
-                            <apiPackage>org.opendevstack.apiservice.externalservice.marketplace.openapi.api</apiPackage>
-                            <modelPackage>org.opendevstack.apiservice.externalservice.marketplace.openapi.model</modelPackage>
-                            <invokerPackage>org.opendevstack.apiservice.externalservice.marketplace.openapi</invokerPackage>
+                            <apiPackage>org.opendevstack.apiservice.externalservice.marketplace.client.api</apiPackage>
+                            <modelPackage>org.opendevstack.apiservice.externalservice.marketplace.client.model</modelPackage>
+                            <invokerPackage>org.opendevstack.apiservice.externalservice.marketplace.client</invokerPackage>
                             <skipOverwrite>false</skipOverwrite>
                             <generateApis>true</generateApis>
                             <generateModels>true</generateModels>

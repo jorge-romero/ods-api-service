@@ -7,22 +7,23 @@ import org.opendevstack.apiservice.externalservice.marketplace.client.Marketplac
 import org.opendevstack.apiservice.externalservice.marketplace.client.MarketplaceApiClientFactory;
 import org.opendevstack.apiservice.externalservice.marketplace.config.MarketplaceInstanceConfig;
 import org.opendevstack.apiservice.externalservice.marketplace.exception.MarketplaceException;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.ApiClient;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.api.CatalogHealthApi;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.api.CatalogItemsApi;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.api.ProjectComponentsApi;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.api.ProvisionResultsApi;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.api.ProvisionerActionsApi;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.api.ProvisionerHealthApi;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.CatalogItem;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.GetCatalogHealth200Response;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.GetProvisionerHealth200Response;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.NotifyProvisioningStatusUpdateRequest;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProjectComponentExtendedInfo;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProvisionAction;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProvisionActionParameter;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProvisionActionResponse;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProvisioningDeleteRequest;
+import org.opendevstack.apiservice.externalservice.marketplace.client.ApiClient;
+import org.opendevstack.apiservice.externalservice.marketplace.client.api.CatalogHealthApi;
+import org.opendevstack.apiservice.externalservice.marketplace.client.api.CatalogItemsApi;
+import org.opendevstack.apiservice.externalservice.marketplace.client.api.ProjectComponentsApi;
+import org.opendevstack.apiservice.externalservice.marketplace.client.api.ProvisionResultsApi;
+import org.opendevstack.apiservice.externalservice.marketplace.client.api.ProvisionerActionsApi;
+import org.opendevstack.apiservice.externalservice.marketplace.client.api.ProvisionerHealthApi;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.CatalogItem;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.GetCatalogHealth200Response;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.GetProvisionerHealth200Response;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentExtendedInfo;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisionAction;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisionActionParameter;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisionActionResponse;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisioningDeleteRequest;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisioningStatusUpdateRequest;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisioningStatusUpdateRequestAllOfParameters;
 import org.opendevstack.apiservice.externalservice.marketplace.service.MarketplaceService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -194,7 +195,7 @@ public class MarketplaceServiceImpl implements MarketplaceService {
 
             ProvisioningDeleteRequest provisioningDeleteRequest = new ProvisioningDeleteRequest();
             provisioningDeleteRequest.setComponentId(componentId);
-            provisionResultsApi.deleteProvisioningStatus(projectId, provisioningDeleteRequest);
+            provisionResultsApi.deleteProjectComponent(projectId, provisioningDeleteRequest);
         } catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
             throw new MarketplaceException(
                     String.format("Access denied when deleting project component '%s' in project '%s' and instance '%s'",
@@ -207,23 +208,36 @@ public class MarketplaceServiceImpl implements MarketplaceService {
     }
 
     @Override
-    public void registerProjectComponent(String projectId, String componentId) throws MarketplaceException {
-        registerProjectComponent(getDefaultInstance(), projectId, componentId);
+    public void registerProjectComponent(String projectId,
+                                         String componentId,
+                                         String catalogItemSlug,
+                                         List<ProvisioningStatusUpdateRequestAllOfParameters> params)
+            throws MarketplaceException {
+        registerProjectComponent(getDefaultInstance(), projectId, componentId, catalogItemSlug, params);
     }
 
     @Override
-    public void registerProjectComponent(String instanceName, String projectId, String componentId) throws MarketplaceException {
+    public void registerProjectComponent(String instanceName,
+                                         String projectId,
+                                         String componentId,
+                                         String catalogItemSlug,
+                                         List<ProvisioningStatusUpdateRequestAllOfParameters> params)
+            throws MarketplaceException {
         log.debug("Marketplace service REGISTER component {} for project {}: ", componentId, projectId);
         try {
-            MarketplaceApiClient marketplaceClient = getOboAuthenticatedClient(instanceName);
+            MarketplaceApiClient marketplaceClient = clientFactory.getClient(instanceName);
             ApiClient apiClient = marketplaceClient.getApiClient();
 
             ProvisionResultsApi provisionResultsApi = new ProvisionResultsApi(apiClient);
             apiClient.setBasePath(marketplaceClient.getConfig().getProvisionerActionsBaseUrl());
             log.debug("Api client base path: {}", apiClient.getBasePath());
 
-            NotifyProvisioningStatusUpdateRequest registerRequest = new NotifyProvisioningStatusUpdateRequest();
-            registerRequest.setComponentId(componentId);
+            ProvisioningStatusUpdateRequest registerRequest = new ProvisioningStatusUpdateRequest()
+                .componentId(componentId)
+                .catalogItemSlug(catalogItemSlug)
+                .componentUrl(String.format("%s/projects/%s/repos/%s/browse",
+                    marketplaceClient.getConfig().getBitbucketBaseUrl(), projectId, componentId))
+                .parameters(params);
             provisionResultsApi.notifyProvisioningStatusUpdate(projectId, "CREATED", registerRequest);
         } catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
             throw new MarketplaceException(

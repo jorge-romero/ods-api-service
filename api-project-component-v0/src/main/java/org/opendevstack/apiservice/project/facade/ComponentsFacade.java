@@ -3,9 +3,10 @@ package org.opendevstack.apiservice.project.facade;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.opendevstack.apiservice.externalservice.marketplace.exception.MarketplaceException;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.CatalogItem;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProjectComponentExtendedInfo;
-import org.opendevstack.apiservice.externalservice.marketplace.openapi.model.ProvisionActionParameter;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.CatalogItem;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentExtendedInfo;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisionActionParameter;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisioningStatusUpdateRequestAllOfParameters;
 import org.opendevstack.apiservice.externalservice.marketplace.service.CatalogItemOperations;
 import org.opendevstack.apiservice.externalservice.marketplace.service.MarketplaceService;
 import org.opendevstack.apiservice.project.exception.CatalogItemNotFoundException;
@@ -14,6 +15,7 @@ import org.opendevstack.apiservice.project.exception.ComponentBadRequestExceptio
 import org.opendevstack.apiservice.project.exception.ComponentCreationException;
 import org.opendevstack.apiservice.project.exception.ComponentDeletionException;
 import org.opendevstack.apiservice.project.exception.ComponentNotFoundException;
+import org.opendevstack.apiservice.project.exception.ComponentRegistrationException;
 import org.opendevstack.apiservice.project.exception.ComponentRetrievalException;
 import org.opendevstack.apiservice.project.mapper.MarketplaceMapper;
 import org.opendevstack.apiservice.project.model.Component;
@@ -175,13 +177,19 @@ public class ComponentsFacade {
         return false;
     }
 
-    public boolean registerProjectComponent(String projectId, String componentId) {
+    public void registerProjectComponent(String projectId, CreateComponentRequest createComponentRequest) {
+        String componentId = createComponentRequest.getName();
+        String productId = createComponentRequest.getProductId();
         try {
-            marketplaceExternalService.registerProjectComponent(projectId, componentId);
-            return true;
+            List<ProvisioningStatusUpdateRequestAllOfParameters> parameters = marketplaceMapper
+                    .mapCreateComponentRequestToRegisterComponentParameterList(createComponentRequest);
+            marketplaceExternalService.registerProjectComponent(projectId, componentId, productId, parameters);
+            log.info("Successfully registered component '{}' for project '{}'", componentId, projectId);
         } catch (MarketplaceException e) {
-            log.error("Failed to register component in marketplace for project with id {}", projectId, e);
-            return false;
+            log.error("Failed to register component '{}' for project '{}': {}", componentId, projectId, e.getMessage(), e);
+            throw new ComponentRegistrationException(
+                    String.format("Failed to register component '%s' for project '%s': %s", componentId, projectId, e.getMessage()), e
+            );
         }
     }
 }

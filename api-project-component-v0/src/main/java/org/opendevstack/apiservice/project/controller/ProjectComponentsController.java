@@ -28,9 +28,15 @@ public class ProjectComponentsController implements ProjectComponentsApi {
 
     @Override
     public ResponseEntity<CreateComponentResponse> createProjectComponent(String projectId, CreateComponentRequest createComponentRequest) {
-        componentsFacade.provisionProjectComponent(projectId, createComponentRequest);
 
-        log.info("Created component '{}' for project '{}'", createComponentRequest.getName(), projectId);
+        if (Boolean.TRUE.equals(createComponentRequest.getRegisterOnly())) {
+            componentsFacade.registerProjectComponent(projectId, createComponentRequest);
+            log.info("Registered component '{}' for project '{}'", createComponentRequest.getName(), projectId);
+        } else {
+            componentsFacade.provisionProjectComponent(projectId, createComponentRequest);
+            log.info("Created component '{}' for project '{}'", createComponentRequest.getName(), projectId);
+        }
+
         return componentResponseMapper.toResponseEntity(
                 ComponentsResponseFactory.entityCreated(projectId, createComponentRequest.getName())
         );
