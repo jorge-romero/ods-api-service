@@ -10,11 +10,14 @@ import org.opendevstack.apiservice.externalservice.marketplace.exception.Marketp
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.CatalogItem;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentExtendedInfo;
 import org.opendevstack.apiservice.externalservice.marketplace.service.MarketplaceService;
+import org.opendevstack.apiservice.project.config.ProjectComponentsCreateProperties;
 import org.opendevstack.apiservice.project.exception.ComponentAlreadyExistsException;
 import org.opendevstack.apiservice.project.exception.ComponentCreationException;
 import org.opendevstack.apiservice.project.exception.ComponentDeletionException;
 import org.opendevstack.apiservice.project.exception.ComponentNotFoundException;
 import org.opendevstack.apiservice.project.exception.ComponentRegistrationException;
+import org.opendevstack.apiservice.project.exception.ComponentReservedParamException;
+import org.opendevstack.apiservice.project.exception.ComponentReservedParamException;
 import org.opendevstack.apiservice.project.mapper.MarketplaceMapper;
 import org.opendevstack.apiservice.project.model.Component;
 import org.opendevstack.apiservice.project.model.ComponentsStatusDTO;
@@ -23,6 +26,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
 
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -44,11 +50,15 @@ class ComponentsFacadeTest {
     @Mock
     private MarketplaceService marketplaceExternalService;
 
+    private ProjectComponentsCreateProperties createProperties;
+
     private ComponentsFacade componentsFacade;
 
     @BeforeEach
     void setup() {
-        componentsFacade = new ComponentsFacade(marketplaceExternalService, marketplaceMapper);
+        createProperties = new ProjectComponentsCreateProperties();
+        createProperties.setReservedParams(List.of("workflow", "ods_namespace", "component_type", "quickstarter_repo"));
+        componentsFacade = new ComponentsFacade(marketplaceExternalService, marketplaceMapper, createProperties);
     }
 
     @Test
@@ -106,22 +116,32 @@ class ComponentsFacadeTest {
     }
 
     @Test
+    void create_project_component_throws_bad_request_when_request_contains_reserved_param() {
+        CreateComponentRequest request = buildTestCreateComponentRequest();
+        request.putParamsItem("ods_namespace", "null");
+
+        assertThatThrownBy(() -> componentsFacade.provisionProjectComponent("testProject", request))
+                .isInstanceOf(ComponentReservedParamException.class)
+                .hasMessage("Parameter 'ods_namespace' cannot be provided because it is managed by the system.");
+    }
+
+    @Test
     void create_project_component_throws_already_exists_when_marketplace_returns_conflict() throws MarketplaceException {
         CreateComponentRequest request = buildTestCreateComponentRequest();
         HttpClientErrorException conflict = HttpClientErrorException.Conflict.create(
-            HttpStatus.CONFLICT,
-            "Conflict",
-            HttpHeaders.EMPTY,
-            new byte[0],
-            null
+                HttpStatus.CONFLICT,
+                "Conflict",
+                HttpHeaders.EMPTY,
+                new byte[0],
+                null
         );
 
         when(marketplaceExternalService.provisionProjectComponent(eq("testProject"), anyList()))
-            .thenThrow(new MarketplaceException("This component name already exists, please choose another name.", conflict));
+                .thenThrow(new MarketplaceException("This component name already exists, please choose another name.", conflict));
 
         assertThatThrownBy(() -> componentsFacade.provisionProjectComponent("testProject", request))
-            .isInstanceOf(ComponentAlreadyExistsException.class)
-            .hasMessage("This component name already exists, please choose another name.");
+                .isInstanceOf(ComponentAlreadyExistsException.class)
+                .hasMessage("This component name already exists, please choose another name.");
         verify(marketplaceExternalService).provisionProjectComponent(eq("testProject"), anyList());
     }
 

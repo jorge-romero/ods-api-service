@@ -10,6 +10,7 @@ import org.opendevstack.apiservice.project.exception.ComponentCreationException;
 import org.opendevstack.apiservice.project.exception.ComponentDeletionException;
 import org.opendevstack.apiservice.project.exception.ComponentErrorKey;
 import org.opendevstack.apiservice.project.exception.ComponentNotFoundException;
+import org.opendevstack.apiservice.project.exception.ComponentReservedParamException;
 import org.opendevstack.apiservice.project.exception.ComponentRegistrationException;
 import org.opendevstack.apiservice.project.exception.ComponentRetrievalException;
 import org.opendevstack.apiservice.project.model.CreateComponentResponse;
@@ -215,6 +216,22 @@ public class ProjectComponentsExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(response);
+    }
+
+    @ExceptionHandler(ComponentReservedParamException.class)
+    public ResponseEntity<CreateComponentResponse> handleComponentReservedParamException(
+            ComponentReservedParamException ex,
+            HttpServletRequest request) {
+
+        log.warn("Reserved parameter sent by client: {}", ex.getMessage());
+
+        CreateComponentResponse response = ComponentsResponseFactory.badRequest(
+                request.getRequestURI(),
+                ex.getMessage(),
+                ComponentErrorKey.INVALID_PARAMETERS
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(Exception.class)

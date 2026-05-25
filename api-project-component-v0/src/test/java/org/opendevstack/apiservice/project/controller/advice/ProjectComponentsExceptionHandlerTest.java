@@ -9,6 +9,7 @@ import org.mockito.MockitoAnnotations;
 import org.opendevstack.apiservice.project.exception.ComponentAlreadyExistsException;
 import org.opendevstack.apiservice.project.exception.ComponentCreationException;
 import org.opendevstack.apiservice.project.exception.ComponentNotFoundException;
+import org.opendevstack.apiservice.project.exception.ComponentReservedParamException;
 import org.opendevstack.apiservice.project.exception.ComponentRegistrationException;
 import org.opendevstack.apiservice.project.model.CreateComponentResponse;
 import org.springframework.core.MethodParameter;
@@ -162,6 +163,21 @@ class ProjectComponentsExceptionHandlerTest {
         assertThat(response.getBody().getErrorKey()).isEqualTo("003");
         assertThat(response.getBody().getMessage()).isEqualTo("Registration failed");
         assertThat(response.getBody().getPath()).isEqualTo("/api/pub/v0/projects/test-project/components/");
+    }
+
+    @Test
+    void handle_component_reserved_param_exception_returns_bad_request() {
+        ComponentReservedParamException exception = new ComponentReservedParamException(
+                "Parameter 'ods_namespace' cannot be provided because it is managed by the system.");
+
+        ResponseEntity<CreateComponentResponse> response = handler.handleComponentReservedParamException(exception, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST.name());
+        assertThat(response.getBody().getErrorKey()).isEqualTo("006");
+        assertThat(response.getBody().getMessage())
+                .isEqualTo("Parameter 'ods_namespace' cannot be provided because it is managed by the system.");
     }
 
     @Test

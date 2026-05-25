@@ -9,6 +9,7 @@ import org.opendevstack.apiservice.externalservice.marketplace.client.model.Prov
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisioningStatusUpdateRequestAllOfParameters;
 import org.opendevstack.apiservice.externalservice.marketplace.service.CatalogItemOperations;
 import org.opendevstack.apiservice.externalservice.marketplace.service.MarketplaceService;
+import org.opendevstack.apiservice.project.config.ProjectComponentsCreateProperties;
 import org.opendevstack.apiservice.project.exception.CatalogItemNotFoundException;
 import org.opendevstack.apiservice.project.exception.ComponentAlreadyExistsException;
 import org.opendevstack.apiservice.project.exception.ComponentBadRequestException;
@@ -16,6 +17,7 @@ import org.opendevstack.apiservice.project.exception.ComponentCreationException;
 import org.opendevstack.apiservice.project.exception.ComponentDeletionException;
 import org.opendevstack.apiservice.project.exception.ComponentNotFoundException;
 import org.opendevstack.apiservice.project.exception.ComponentRegistrationException;
+import org.opendevstack.apiservice.project.exception.ComponentReservedParamException;
 import org.opendevstack.apiservice.project.exception.ComponentRetrievalException;
 import org.opendevstack.apiservice.project.mapper.MarketplaceMapper;
 import org.opendevstack.apiservice.project.model.Component;
@@ -24,6 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -33,6 +38,8 @@ public class ComponentsFacade {
     private final MarketplaceService marketplaceExternalService;
 
     private final MarketplaceMapper marketplaceMapper;
+
+    private final ProjectComponentsCreateProperties createProperties;
 
     public Component getProjectComponent(String projectId, String componentId) {
         try {
@@ -63,6 +70,7 @@ public class ComponentsFacade {
     }
 
     public void provisionProjectComponent(String projectId, CreateComponentRequest createComponentRequest) {
+        validateReservedParams(createComponentRequest);
         try {
             CatalogItem catalogItem = resolveCatalogItem(createComponentRequest);
             List<ProvisionActionParameter> createComponentParameterList = marketplaceMapper
@@ -86,6 +94,30 @@ public class ComponentsFacade {
                     String.format("Failed to create component for project '%s': %s", projectId, e.getMessage()), e
             );
         }
+    }
+
+    private void validateReservedParams(CreateComponentRequest createComponentRequest) {
+        if (createComponentRequest == null || createComponentRequest.getParams() == null
+                || createComponentRequest.getParams().isEmpty()) {
+            return;
+        }
+
+        if (createProperties.getReservedParams() == null || createProperties.getReservedParams().isEmpty()) {
+            return;
+        }
+
+        Set<String> reservedParams = createProperties.getReservedParams().stream()
+                .map(param -> param.toLowerCase(Locale.ROOT))
+                .collect(Collectors.toSet());
+
+        createComponentRequest.getParams().keySet().stream()
+                .filter(param -> param != null && reservedParams.contains(param.toLowerCase(Locale.ROOT)))
+                .findFirst()
+                .ifPresent(param -> {
+                    throw new ComponentReservedParamException(
+                            String.format("Parameter '%s' cannot be provided because it is managed by the system.", param)
+                    );
+                });
     }
 
     /**

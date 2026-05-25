@@ -203,6 +203,11 @@ automation:
         trust-store-type: ${UIPATH_SSL_TRUST_STORE_TYPE:JKS}
 
 apis:
+  project-components:
+    create:
+      # Parameters reserved for backend/system use. If provided by clients in params, request is rejected.
+      reserved-params: ${API_PROJECT_COMPONENTS_RESERVED_PARAMS:}
+
   project-users:
     # Workflow name triggered for project user automation tasks.
     ansible-workflow-name: ${API_PROJECT_USERS_WORKFLOW_NAME:ansible++workflow}
