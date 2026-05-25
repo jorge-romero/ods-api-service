@@ -7,4 +7,6 @@ public interface ProjectExistenceService {
     boolean isProjectFound(String projectKey) throws ProjectExistenceServiceException;
 
     boolean isProjectFoundByName(String projecName) throws ProjectExistenceServiceException;
+
+    boolean isProjectFoundInCollection(String projectKey) throws ProjectExistenceServiceException;
 }

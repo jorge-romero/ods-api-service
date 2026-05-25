@@ -30,15 +30,26 @@ public class ProjectCreationCommandBuilder {
     
     private final ProjectExistenceService projectExistenceService;
 
-    public ProjectCreationCommand build(CreateProjectRequest request, ClientAppEntity clientApp) {
+    public ProjectCreationCommand buildForCreation(CreateProjectRequest request, ClientAppEntity clientApp) {
         ClientAppProjectFlavorEntity flavor = resolveFlavor(request, clientApp);
+        String projectKey = resolveProjectKey(request.getProjectKey(), flavor);
 
+        return build(request, flavor, projectKey, clientApp);
+    }
+
+    public ProjectCreationCommand buildForRegistration(CreateProjectRequest request, ClientAppEntity clientApp) {
+        ClientAppProjectFlavorEntity flavor = resolveFlavor(request, clientApp);
+        String projectKey = resolveProjectKeyForRegistration(request.getProjectKey(), flavor);
+
+        return build(request, flavor, projectKey, clientApp);
+    }
+
+    private ProjectCreationCommand build(CreateProjectRequest request, ClientAppProjectFlavorEntity flavor, String projectKey, ClientAppEntity clientApp) {
         String projectFlavor = firstNonBlank(request.getProjectFlavor(), flavor.getName());
         String configurationItem = firstNonBlank(request.getConfigurationItem(), flavor.getConfigItem());
         String owner = firstNonBlank(request.getOwner(), flavor.getProjectOwner());
         String x2account = firstNonBlank(request.getX2OdsAccount(), flavor.getServiceAccount());
         String location = firstNonBlank(request.getLocation(), flavor.getLocation());
-        String projectKey = resolveProjectKey(request.getProjectKey(), flavor);
         String projectName = resolveProjectName(request.getProjectName(), projectKey);
         String projectDescription = firstNonBlank(request.getProjectDescription(), "project " + projectFlavor);
 
@@ -123,6 +134,26 @@ public class ProjectCreationCommandBuilder {
 
             String pattern = flavor.getProjectKeyPattern();
             
+            return generateProjectKeyService.generateProjectKey(pattern);
+        } catch (ProjectKeyGenerationException e) {
+            throw new ProjectCreationException("Error generating the project key", e);
+        } catch (ProjectExistenceServiceException e) {
+            throw new ProjectCreationException("Error checking if the generated key exists: " + e.getMessage(), e);
+        }
+    }
+
+    private String resolveProjectKeyForRegistration(String existingProjectKey, ClientAppProjectFlavorEntity flavor) {
+        try {
+            if (Strings.isNotEmpty(existingProjectKey)) {
+                if (!projectExistenceService.isProjectFoundInCollection(existingProjectKey)) {
+                    return existingProjectKey;
+                }
+
+                throw new ProjectAlreadyExistsException(ErrorKey.PROJECT_ALREADY_EXISTS);
+            }
+
+            String pattern = flavor.getProjectKeyPattern();
+
             return generateProjectKeyService.generateProjectKey(pattern);
         } catch (ProjectKeyGenerationException e) {
             throw new ProjectCreationException("Error generating the project key", e);

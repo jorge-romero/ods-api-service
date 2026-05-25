@@ -58,6 +58,11 @@ public class ProjectExistenceServiceImpl implements ProjectExistenceService {
         return !projectService.findProjectsByName(projecName).isEmpty();
     }
 
+    @Override
+    public boolean isProjectFoundInCollection(String projectKey) throws ProjectExistenceServiceException {
+        return existsInCollection(projectKey);
+    }
+
     private boolean existsInCollection(String projectKey) {
         return projectService.getProject(projectKey) != null;
     }

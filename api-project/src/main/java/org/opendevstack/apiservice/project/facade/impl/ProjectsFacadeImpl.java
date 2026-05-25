@@ -65,13 +65,14 @@ public class ProjectsFacadeImpl implements ProjectsFacade {
 
         ClientAppEntity clientApp = clientAppService.findByClientId(clientId);
 
-        ProjectCreationCommand command = projectCreationCommandBuilder.build(request, clientApp);
-
+        ProjectCreationCommand command;
         ProjectResponse project;
 
         if (Boolean.TRUE.equals(request.getRegistrationOnly())) {
+            command = projectCreationCommandBuilder.buildForRegistration(request, clientApp);
             project = registerProject(command);
         } else {
+            command = projectCreationCommandBuilder.buildForCreation(request, clientApp);
             project = createNewProject(command);
         }
 

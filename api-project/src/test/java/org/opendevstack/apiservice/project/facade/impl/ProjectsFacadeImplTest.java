@@ -101,7 +101,7 @@ class ProjectsFacadeImplTest {
         apiResponse.setProjectFlavor("DLSS");
 
         when(clientAppService.findByClientId(CLIENT_ID)).thenReturn(clientApp);
-        when(projectCreationCommandBuilder.build(request, clientApp)).thenReturn(command);
+        when(projectCreationCommandBuilder.buildForCreation(request, clientApp)).thenReturn(command);
         when(projectMapper.toServiceRequest(command)).thenReturn(serviceRequest);
         when(projectService.saveProject(serviceRequest)).thenReturn(projectResponse);
         when(automationParametersMapper.toWorkflowParameters(command, "11111111-1111-1111-1111-111111111111"))
@@ -114,7 +114,7 @@ class ProjectsFacadeImplTest {
 
         assertEquals("Pending", result.getStatus());
         assertEquals("DLSS", result.getProjectFlavor());
-        verify(projectCreationCommandBuilder).build(request, clientApp);
+        verify(projectCreationCommandBuilder).buildForCreation(request, clientApp);
         verify(projectMapper).toServiceRequest(command);
         verify(automationParametersMapper)
                 .toWorkflowParameters(command, "11111111-1111-1111-1111-111111111111");
@@ -139,7 +139,7 @@ class ProjectsFacadeImplTest {
         apiResponse.setProjectFlavor("REGULAR");
 
         when(clientAppService.findByClientId(CLIENT_ID)).thenReturn(clientApp);
-        when(projectCreationCommandBuilder.build(request, clientApp)).thenReturn(command);
+        when(projectCreationCommandBuilder.buildForRegistration(request, clientApp)).thenReturn(command);
         when(projectMapper.toServiceRequest(command)).thenReturn(serviceRequest);
         when(projectService.saveProject(serviceRequest)).thenReturn(projectResponse);
         when(projectCreationResponseMapper.toSuccessResponse(command, projectResponse)).thenReturn(apiResponse);
@@ -148,7 +148,7 @@ class ProjectsFacadeImplTest {
 
         assertEquals("Running", result.getStatus());
         assertEquals("REGULAR", result.getProjectFlavor());
-        verify(projectCreationCommandBuilder).build(request, clientApp);
+        verify(projectCreationCommandBuilder).buildForRegistration(request, clientApp);
         verify(projectMapper).toServiceRequest(command);
         verify(automationParametersMapper, never())
                 .toWorkflowParameters(command, "11111111-1111-1111-1111-111111111111");
@@ -164,7 +164,7 @@ class ProjectsFacadeImplTest {
                 "DLSS01", "name", "desc", "DLSS", "CI-001", "eu", "x2test", "owner", CLIENT_ID);
 
         when(clientAppService.findByClientId(CLIENT_ID)).thenReturn(clientApp);
-        when(projectCreationCommandBuilder.build(request, clientApp)).thenReturn(command);
+        when(projectCreationCommandBuilder.buildForCreation(request, clientApp)).thenReturn(command);
         when(projectMapper.toServiceRequest(command)).thenReturn(new ProjectRequest());
         when(projectService.saveProject(any(ProjectRequest.class)))
                 .thenReturn(ProjectResponse.builder()

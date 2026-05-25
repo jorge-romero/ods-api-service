@@ -50,7 +50,7 @@ class ProjectCreationCommandBuilderTest {
     }
 
     @Test
-    void build_resolves_defaults_from_flavor_when_request_fields_are_missing() throws ProjectExistenceServiceException {
+    void build_for_creation_resolves_defaults_from_flavor_when_request_fields_are_missing() throws ProjectExistenceServiceException {
         ClientAppProjectFlavorEntity flavor = build_flavor("DLSS", "CI-001", new String[] {}, "eu", "owner1");
         ClientAppEntity clientApp = build_client_app(List.of(flavor));
         CreateProjectRequest request = build_request("DLSS", null, "KEY01");
@@ -59,7 +59,7 @@ class ProjectCreationCommandBuilderTest {
 
         when(projectExistenceService.isProjectFound("KEY01")).thenReturn(false);
 
-        ProjectCreationCommand result = sut.build(request, clientApp);
+        ProjectCreationCommand result = sut.buildForCreation(request, clientApp);
 
         assertEquals("DLSS", result.getProjectFlavor());
         assertEquals("CI-001", result.getConfigurationItem());
@@ -69,21 +69,21 @@ class ProjectCreationCommandBuilderTest {
     }
 
     @Test
-    void build_resolves_flavor_from_configuration_item_when_flavor_is_not_provided() throws ProjectExistenceServiceException {
+    void build_for_creation_resolves_flavor_from_configuration_item_when_flavor_is_not_provided() throws ProjectExistenceServiceException {
         ClientAppProjectFlavorEntity flavor = build_flavor("DLSS", "CI-001", new String[] {}, "eu", "owner1");
         ClientAppEntity clientApp = build_client_app(List.of(flavor));
         CreateProjectRequest request = build_request(null, "CI-001", "KEY01");
 
         when(projectExistenceService.isProjectFound("KEY01")).thenReturn(false);
 
-        ProjectCreationCommand result = sut.build(request, clientApp);
+        ProjectCreationCommand result = sut.buildForCreation(request, clientApp);
 
         assertEquals("DLSS", result.getProjectFlavor());
         assertEquals("CI-001", result.getConfigurationItem());
     }
 
     @Test
-    void build_generates_project_key_when_request_project_key_is_null() throws ProjectExistenceServiceException, org.opendevstack.apiservice.serviceproject.exception.ProjectKeyGenerationException {
+    void build_for_creation_generates_project_key_when_request_project_key_is_null() throws ProjectExistenceServiceException, org.opendevstack.apiservice.serviceproject.exception.ProjectKeyGenerationException {
         ClientAppProjectFlavorEntity flavor = build_flavor("DLSS", "CI-001", new String[] {}, "eu", "owner1");
         ClientAppEntity clientApp = build_client_app(List.of(flavor));
         CreateProjectRequest request = build_request("DLSS", null, null);
@@ -91,14 +91,14 @@ class ProjectCreationCommandBuilderTest {
         when(generateProjectKeyService.generateProjectKey("DLSS%06d")).thenReturn("DLSS000001");
         when(projectExistenceService.isProjectFound("DLSS000001")).thenReturn(false);
 
-        ProjectCreationCommand result = sut.build(request, clientApp);
+        ProjectCreationCommand result = sut.buildForCreation(request, clientApp);
 
         assertEquals("DLSS000001", result.getProjectKey());
         verify(generateProjectKeyService).generateProjectKey("DLSS%06d");
     }
 
     @Test
-    void build_throws_project_already_exists_exception_when_project_key_already_exists() throws ProjectExistenceServiceException {
+    void build_for_creation_throws_project_already_exists_exception_when_project_key_already_exists() throws ProjectExistenceServiceException {
         ClientAppProjectFlavorEntity flavor = build_flavor("DLSS", "CI-001", new String[] {}, "eu", "owner1");
         ClientAppEntity clientApp = build_client_app(List.of(flavor));
         CreateProjectRequest request = build_request("DLSS", null, "KEY01");
@@ -106,35 +106,35 @@ class ProjectCreationCommandBuilderTest {
         when(projectExistenceService.isProjectFound("KEY01")).thenReturn(true);
 
         ProjectAlreadyExistsException ex = assertThrows(ProjectAlreadyExistsException.class,
-                () -> sut.build(request, clientApp));
+                () -> sut.buildForCreation(request, clientApp));
         assertEquals(ErrorKey.PROJECT_ALREADY_EXISTS, ex.getErrorKey());
     }
 
     @Test
-    void build_throws_validation_exception_when_flavor_and_config_item_are_missing() {
+    void build_for_creation_throws_validation_exception_when_flavor_and_config_item_are_missing() {
         ClientAppProjectFlavorEntity flavor = build_flavor("DLSS", "CI-001", new String[] {}, "eu", "owner1");
         ClientAppEntity clientApp = build_client_app(List.of(flavor));
         CreateProjectRequest request = build_request(null, null, "KEY01");
 
         ProjectValidationException ex = assertThrows(ProjectValidationException.class,
-                () -> sut.build(request, clientApp));
+                () -> sut.buildForCreation(request, clientApp));
         assertEquals(ErrorKey.BAD_REQUEST_FLAVOR_CONFIG_ITEM, ex.getErrorKey());
     }
 
     @Test
-    void build_throws_validation_exception_when_configuration_item_matches_multiple_flavors() {
+    void build_for_creation_throws_validation_exception_when_configuration_item_matches_multiple_flavors() {
         ClientAppEntity clientApp = build_client_app(List.of(
                 build_flavor("DLSS", "CI-001", new String[] {}, "eu", "owner1"),
                 build_flavor("AMP", "CI-001", new String[] {}, "eu", "owner2")));
         CreateProjectRequest request = build_request(null, "CI-001", "KEY01");
 
         ProjectValidationException ex = assertThrows(ProjectValidationException.class,
-                () -> sut.build(request, clientApp));
+                () -> sut.buildForCreation(request, clientApp));
         assertEquals(ErrorKey.INVALID_CONFIG_ITEM, ex.getErrorKey());
     }
 
     @Test
-    void build_throws_project_key_generation_exception_when_generation_fails() throws Exception {
+    void build_for_creation_throws_project_key_generation_exception_when_generation_fails() throws Exception {
         ClientAppProjectFlavorEntity flavor = build_flavor("DLSS", "CI-001", new String[] {}, "eu", "owner1");
         ClientAppEntity clientApp = build_client_app(List.of(flavor));
         CreateProjectRequest request = build_request("DLSS", null, null);
@@ -142,11 +142,11 @@ class ProjectCreationCommandBuilderTest {
         when(generateProjectKeyService.generateProjectKey("DLSS%06d"))
                 .thenThrow(new org.opendevstack.apiservice.serviceproject.exception.ProjectKeyGenerationException("fail"));
 
-        assertThrows(ProjectCreationException.class, () -> sut.build(request, clientApp));
+        assertThrows(ProjectCreationException.class, () -> sut.buildForCreation(request, clientApp));
     }
 
     @Test
-    void build_throws_project_already_exists_exception_when_project_name_already_exists() throws Exception {
+    void build_for_creation_throws_project_already_exists_exception_when_project_name_already_exists() throws Exception {
         ClientAppProjectFlavorEntity flavor = build_flavor("DLSS", "CI-001", new String[] {}, "eu", "owner1");
         ClientAppEntity clientApp = build_client_app(List.of(flavor));
         CreateProjectRequest request = build_request("DLSS", null, "KEY01");
@@ -155,11 +155,11 @@ class ProjectCreationCommandBuilderTest {
         when(projectExistenceService.isProjectFound("KEY01")).thenReturn(false);
         when(projectExistenceService.isProjectFoundByName("Existing Project")).thenReturn(true);
 
-        assertThrows(ProjectAlreadyExistsException.class, () -> sut.build(request, clientApp));
+        assertThrows(ProjectAlreadyExistsException.class, () -> sut.buildForCreation(request, clientApp));
     }
 
     @Test
-    void build_throws_project_creation_exception_when_project_name_check_fails() throws Exception {
+    void build_for_creation_throws_project_creation_exception_when_project_name_check_fails() throws Exception {
         ClientAppProjectFlavorEntity flavor = build_flavor("DLSS", "CI-001", new String[] {}, "eu", "owner1");
         ClientAppEntity clientApp = build_client_app(List.of(flavor));
         CreateProjectRequest request = build_request("DLSS", null, "KEY01");
@@ -169,7 +169,39 @@ class ProjectCreationCommandBuilderTest {
         when(projectExistenceService.isProjectFoundByName("Any Project"))
                 .thenThrow(new ProjectExistenceServiceException("lookup failed"));
 
-        assertThrows(ProjectCreationException.class, () -> sut.build(request, clientApp));
+        assertThrows(ProjectCreationException.class, () -> sut.buildForCreation(request, clientApp));
+    }
+
+    @Test
+    void build_for_registration_resolves_defaults_from_flavor_when_request_fields_are_missing() throws ProjectExistenceServiceException {
+        ClientAppProjectFlavorEntity flavor = build_flavor("DLSS", "CI-001", new String[] {}, "eu", "owner1");
+        ClientAppEntity clientApp = build_client_app(List.of(flavor));
+        CreateProjectRequest request = build_request("DLSS", null, "KEY01");
+        request.setOwner(null);
+        request.setLocation(null);
+
+        when(projectExistenceService.isProjectFoundInCollection("KEY01")).thenReturn(false);
+
+        ProjectCreationCommand result = sut.buildForRegistration(request, clientApp);
+
+        assertEquals("DLSS", result.getProjectFlavor());
+        assertEquals("CI-001", result.getConfigurationItem());
+        assertEquals("owner1", result.getOwner());
+        assertEquals("eu", result.getLocation());
+        assertEquals("KEY01", result.getProjectKey());
+    }
+
+    @Test
+    void build_for_registration_throws_project_already_exists_exception_when_project_key_already_exists() throws ProjectExistenceServiceException {
+        ClientAppProjectFlavorEntity flavor = build_flavor("DLSS", "CI-001", new String[] {}, "eu", "owner1");
+        ClientAppEntity clientApp = build_client_app(List.of(flavor));
+        CreateProjectRequest request = build_request("DLSS", null, "KEY01");
+
+        when(projectExistenceService.isProjectFoundInCollection("KEY01")).thenReturn(true);
+
+        ProjectAlreadyExistsException ex = assertThrows(ProjectAlreadyExistsException.class,
+                () -> sut.buildForRegistration(request, clientApp));
+        assertEquals(ErrorKey.PROJECT_ALREADY_EXISTS, ex.getErrorKey());
     }
 
     private CreateProjectRequest build_request(String flavor, String configItem, String projectKey) {
