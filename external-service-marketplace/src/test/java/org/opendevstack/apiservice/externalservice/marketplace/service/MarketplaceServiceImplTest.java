@@ -887,7 +887,8 @@ class MarketplaceServiceImplTest {
         ProvisioningStatusUpdateRequest capturedRequest =
                 (ProvisioningStatusUpdateRequest) bodyCaptor.getValue();
 
-        String expectedUrl = bitbucketBaseUrl + "/projects/" + projectKey + "/repos/" + componentId + "/browse";
+        String expectedUrl = bitbucketBaseUrl + "/projects/" + projectKey.toUpperCase() + "/repos/" +
+                projectKey.toLowerCase() + "-" + componentId + "/browse";
         assertEquals(expectedUrl, capturedRequest.getComponentUrl());
     }
 

@@ -235,8 +235,9 @@ public class MarketplaceServiceImpl implements MarketplaceService {
             ProvisioningStatusUpdateRequest registerRequest = new ProvisioningStatusUpdateRequest()
                 .componentId(componentId)
                 .catalogItemSlug(catalogItemSlug)
-                .componentUrl(String.format("%s/projects/%s/repos/%s/browse",
-                    marketplaceClient.getConfig().getBitbucketBaseUrl(), projectId, componentId))
+                .componentUrl(String.format("%s/projects/%s/repos/%s-%s/browse",
+                    marketplaceClient.getConfig().getBitbucketBaseUrl(),
+                    projectId.toUpperCase(), projectId.toLowerCase(), componentId))
                 .parameters(params);
             provisionResultsApi.notifyProvisioningStatusUpdate(projectId, "CREATED", registerRequest);
         } catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
