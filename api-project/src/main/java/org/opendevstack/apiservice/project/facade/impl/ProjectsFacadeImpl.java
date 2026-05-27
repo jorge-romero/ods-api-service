@@ -88,7 +88,6 @@ public class ProjectsFacadeImpl implements ProjectsFacade {
 
         ProjectRequest projectRequest = projectMapper.toServiceRequest(command);
         projectRequest.setStatus(Status.RUNNING);
-        projectRequest.setProjectFlavor("REGULAR");
 
         return projectService.saveProject(projectRequest);
     }

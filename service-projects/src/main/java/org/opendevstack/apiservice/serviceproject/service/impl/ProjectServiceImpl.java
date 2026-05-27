@@ -41,7 +41,7 @@ public class ProjectServiceImpl implements ProjectService {
         entity.setProjectName(request.getProjectName());   
         entity.setProjectFlavor(request.getProjectFlavor());
         entity.setConfigurationItem(request.getConfigurationItem());
-        entity.setDescription(request.getProjectFlavor() + " project");
+        entity.setDescription(request.getProjectDescription());
         entity.setLdapGroupManager(getLdapGroup(MANAGER_ROLE, request.getProjectKey()));
         entity.setLdapGroupTeam(getLdapGroup(TEAM_ROLE, request.getProjectKey()));
         entity.setLdapGroupStakeholder(getLdapGroup(STAKEHOLDER_ROLE, request.getProjectKey()));
