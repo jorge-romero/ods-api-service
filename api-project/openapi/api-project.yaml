@@ -124,7 +124,7 @@ components:
         projectKey:
           type: string
           description: Optional project key. If not provided, a unique key will be generated.
-          pattern: "^[A-Z]{2}[A-Z0-9]{1,8}$"
+          pattern: "^[A-Z][A-Z0-9]{2,9}$"
           minLength: 3
           maxLength: 10
         projectName:
