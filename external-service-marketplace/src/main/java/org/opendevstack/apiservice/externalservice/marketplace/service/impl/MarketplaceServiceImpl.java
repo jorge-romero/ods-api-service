@@ -10,14 +10,14 @@ import org.opendevstack.apiservice.externalservice.marketplace.exception.Marketp
 import org.opendevstack.apiservice.externalservice.marketplace.client.ApiClient;
 import org.opendevstack.apiservice.externalservice.marketplace.client.api.CatalogHealthApi;
 import org.opendevstack.apiservice.externalservice.marketplace.client.api.CatalogItemsApi;
-import org.opendevstack.apiservice.externalservice.marketplace.client.api.ProjectComponentsApi;
+import org.opendevstack.apiservice.externalservice.marketplace.client.api.ProjectComponentsWithProvisionStatusApi;
 import org.opendevstack.apiservice.externalservice.marketplace.client.api.ProvisionResultsApi;
 import org.opendevstack.apiservice.externalservice.marketplace.client.api.ProvisionerActionsApi;
 import org.opendevstack.apiservice.externalservice.marketplace.client.api.ProvisionerHealthApi;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.CatalogItem;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.GetCatalogHealth200Response;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.GetProvisionerHealth200Response;
-import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentExtendedInfo;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentProvisionStatus;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisionAction;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisionActionParameter;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisionActionResponse;
@@ -107,19 +107,19 @@ public class MarketplaceServiceImpl implements MarketplaceService {
     }
 
     @Override
-    public ProjectComponentExtendedInfo getProjectComponent(String projectId, String componentId) throws MarketplaceException {
+    public ProjectComponentProvisionStatus getProjectComponent(String projectId, String componentId) throws MarketplaceException {
         return getProjectComponent(getDefaultInstance(), projectId, componentId);
     }
 
     @Override
-    public ProjectComponentExtendedInfo getProjectComponent(String instanceName, String projectId, String componentId) throws MarketplaceException {
+    public ProjectComponentProvisionStatus getProjectComponent(String instanceName, String projectId, String componentId) throws MarketplaceException {
         log.debug("Marketplace service GET component with id {} for project {} in instance {} ", componentId, projectId, instanceName);
         try {
             MarketplaceApiClient marketplaceClient = getOboAuthenticatedClient(instanceName);
             ApiClient apiClient = marketplaceClient.getApiClient();
-            ProjectComponentsApi projectComponentsApi = new ProjectComponentsApi(apiClient);
+            ProjectComponentsWithProvisionStatusApi projectComponentsApi = new ProjectComponentsWithProvisionStatusApi(apiClient);
             apiClient.setBasePath(marketplaceClient.getConfig().getProjectComponentsBaseUrl());
-            return projectComponentsApi.getProjectComponentById(projectId, componentId);
+            return projectComponentsApi.getProjectComponentProvisionStatusById(projectId, componentId);
         } catch (HttpClientErrorException.NotFound e) {
             log.debug("Component with id '{}' not found in Marketplace instance '{}' for project '{}'",
                     componentId, instanceName, projectId);

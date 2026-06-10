@@ -16,7 +16,7 @@ import org.opendevstack.apiservice.externalservice.marketplace.config.Marketplac
 import org.opendevstack.apiservice.externalservice.marketplace.exception.MarketplaceException;
 import org.opendevstack.apiservice.externalservice.marketplace.client.ApiClient;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.CatalogItem;
-import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentExtendedInfo;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentProvisionStatus;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisionActionResponse;
 import org.opendevstack.apiservice.externalservice.marketplace.service.impl.MarketplaceServiceImpl;
 import org.springframework.core.ParameterizedTypeReference;
@@ -199,7 +199,7 @@ class MarketplaceServiceImplTest {
         when(marketplaceApiClient.getConfig()).thenReturn(instanceConfig);
 
         // Act
-        ProjectComponentExtendedInfo result = marketplaceService.getProjectComponent(instanceName, projectKey, componentId);
+        ProjectComponentProvisionStatus result = marketplaceService.getProjectComponent(instanceName, projectKey, componentId);
 
         // Assert
         assertNull(result);
@@ -348,7 +348,7 @@ class MarketplaceServiceImplTest {
         whenInvokeAPI(PATH_PROJECT_COMPONENT, HttpMethod.GET).thenReturn(ResponseEntity.ok(null));
         when(marketplaceApiClient.getConfig()).thenReturn(instanceConfig);
 
-        ProjectComponentExtendedInfo result = marketplaceService.getProjectComponent(projectKey, componentId);
+        ProjectComponentProvisionStatus result = marketplaceService.getProjectComponent(projectKey, componentId);
 
         assertNull(result);
         verify(clientFactory).getClient("default");
@@ -402,7 +402,7 @@ class MarketplaceServiceImplTest {
         whenInvokeAPI(PATH_PROJECT_COMPONENT, HttpMethod.GET).thenThrow(notFoundEx);
         when(marketplaceApiClient.getConfig()).thenReturn(instanceConfig);
 
-        ProjectComponentExtendedInfo result = marketplaceService.getProjectComponent(projectKey, componentId);
+        ProjectComponentProvisionStatus result = marketplaceService.getProjectComponent(projectKey, componentId);
 
         assertNull(result);
     }

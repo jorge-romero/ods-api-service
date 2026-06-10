@@ -5,7 +5,7 @@ import org.opendevstack.apiservice.externalservice.marketplace.exception.Marketp
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.CatalogItem;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.CatalogItemUserAction;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.CatalogItemUserActionParameter;
-import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentExtendedInfo;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentProvisionStatus;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisionActionParameter;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisioningStatusUpdateRequestAllOfParameters;
 import org.opendevstack.apiservice.project.model.Component;
@@ -22,7 +22,7 @@ public interface MarketplaceMapper {
 
     String DEFAULT_PARAMETER_TYPE = "string";
 
-    default Component mapMarketplaceComponentToV0Component(ProjectComponentExtendedInfo source, CatalogItem catalogItem) throws MarketplaceException {
+    default Component mapMarketplaceComponentToV0Component(ProjectComponentProvisionStatus source, CatalogItem catalogItem) throws MarketplaceException {
         Component component = new Component();
         component.setId(source.getComponentId());
         component.setEnvironment(EnvironmentsDTO.DEV); // Env is always DEV so we hardcode it as such

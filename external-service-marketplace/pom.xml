@@ -150,7 +150,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <openapiNormalizer>FILTER=operationId:getProjectComponents|getProjectComponentById|getCatalogItemById|getCatalogItemBySlug|getCatalogHealth</openapiNormalizer>
+                            <openapiNormalizer>FILTER=operationId:getCatalogItemById|getCatalogItemBySlug|getCatalogHealth</openapiNormalizer>
                             <generatorName>java</generatorName>
                             <output>${project.basedir}/target/generated-sources/openapi</output>
                             <library>resttemplate</library>
@@ -186,7 +186,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <openapiNormalizer>FILTER=operationId:triggerProvisionAction|notifyProvisioningStatusUpdate|deleteProjectComponent|getProvisionerHealth</openapiNormalizer>
+                            <openapiNormalizer>FILTER=operationId:triggerProvisionAction|notifyProvisioningStatusUpdate|deleteProjectComponent|getProjectComponentProvisionStatusById|getProvisionerHealth</openapiNormalizer>
                             <generatorName>java</generatorName>
                             <output>${project.basedir}/target/generated-sources/openapi</output>
                             <library>resttemplate</library>

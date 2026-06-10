@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.opendevstack.apiservice.externalservice.marketplace.exception.MarketplaceException;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.CatalogItem;
-import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentExtendedInfo;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentProvisionStatus;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisionActionParameter;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisioningStatusUpdateRequestAllOfParameters;
 import org.opendevstack.apiservice.externalservice.marketplace.service.CatalogItemOperations;
@@ -43,7 +43,7 @@ public class ComponentsFacade {
 
     public Component getProjectComponent(String projectId, String componentId) {
         try {
-            ProjectComponentExtendedInfo marketplaceComponent = marketplaceExternalService.getProjectComponent(projectId, componentId);
+            ProjectComponentProvisionStatus marketplaceComponent = marketplaceExternalService.getProjectComponent(projectId, componentId);
             if (marketplaceComponent == null) {
                 log.info("Marketplace component with id {} not found", componentId);
                 throw new ComponentNotFoundException(

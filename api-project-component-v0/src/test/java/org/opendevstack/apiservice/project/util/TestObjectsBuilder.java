@@ -1,7 +1,7 @@
 package org.opendevstack.apiservice.project.util;
 
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.CatalogItem;
-import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentExtendedInfo;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentProvisionStatus;
 import org.opendevstack.apiservice.project.model.Component;
 import org.opendevstack.apiservice.project.model.ComponentsStatusDTO;
 import org.opendevstack.apiservice.project.model.CreateComponentRequest;
@@ -26,8 +26,8 @@ public class TestObjectsBuilder {
         return component;
     }
 
-    public static ProjectComponentExtendedInfo buildTestMarketplaceComponent() {
-        ProjectComponentExtendedInfo component = new ProjectComponentExtendedInfo();
+    public static ProjectComponentProvisionStatus buildTestMarketplaceComponent() {
+        ProjectComponentProvisionStatus component = new ProjectComponentProvisionStatus();
         component.setComponentId(UUID.randomUUID().toString());
         component.setStatus("CREATING");
         component.setComponentUrl("http://test.component.url");

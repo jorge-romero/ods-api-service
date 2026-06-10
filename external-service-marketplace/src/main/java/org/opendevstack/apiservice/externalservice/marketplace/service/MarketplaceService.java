@@ -3,7 +3,7 @@ package org.opendevstack.apiservice.externalservice.marketplace.service;
 import org.opendevstack.apiservice.externalservice.api.ExternalService;
 import org.opendevstack.apiservice.externalservice.marketplace.exception.MarketplaceException;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.CatalogItem;
-import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentExtendedInfo;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentProvisionStatus;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisionActionParameter;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProvisioningStatusUpdateRequestAllOfParameters;
 
@@ -18,9 +18,9 @@ public interface MarketplaceService extends ExternalService {
 
     String getDefaultInstance() throws MarketplaceException;
 
-    ProjectComponentExtendedInfo getProjectComponent(String projectId, String componentId) throws MarketplaceException;
+    ProjectComponentProvisionStatus getProjectComponent(String projectId, String componentId) throws MarketplaceException;
 
-    ProjectComponentExtendedInfo getProjectComponent(String instanceName, String projectId, String componentId) throws MarketplaceException;
+    ProjectComponentProvisionStatus getProjectComponent(String instanceName, String projectId, String componentId) throws MarketplaceException;
 
     CatalogItem getCatalogItem(String catalogItemId) throws MarketplaceException;
 

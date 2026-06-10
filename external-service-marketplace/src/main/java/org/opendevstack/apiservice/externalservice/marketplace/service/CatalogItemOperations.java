@@ -1,6 +1,6 @@
 package org.opendevstack.apiservice.externalservice.marketplace.service;
 
-import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentExtendedInfo;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentProvisionStatus;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -18,7 +18,7 @@ public class CatalogItemOperations {
         return Base64.getUrlDecoder().decode(id);
     }
 
-    public static String buildCatalogItemId(ProjectComponentExtendedInfo component) {
+    public static String buildCatalogItemId(ProjectComponentProvisionStatus component) {
         if (component == null || component.getCatalogItemId() == null || component.getCatalogItemRef() == null) {
             return null;
         }

@@ -8,7 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.opendevstack.apiservice.externalservice.marketplace.exception.MarketplaceException;
 import org.opendevstack.apiservice.externalservice.marketplace.client.model.CatalogItem;
-import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentExtendedInfo;
+import org.opendevstack.apiservice.externalservice.marketplace.client.model.ProjectComponentProvisionStatus;
 import org.opendevstack.apiservice.externalservice.marketplace.service.MarketplaceService;
 import org.opendevstack.apiservice.project.config.ProjectComponentsCreateProperties;
 import org.opendevstack.apiservice.project.exception.ComponentAlreadyExistsException;
@@ -16,7 +16,6 @@ import org.opendevstack.apiservice.project.exception.ComponentCreationException;
 import org.opendevstack.apiservice.project.exception.ComponentDeletionException;
 import org.opendevstack.apiservice.project.exception.ComponentNotFoundException;
 import org.opendevstack.apiservice.project.exception.ComponentRegistrationException;
-import org.opendevstack.apiservice.project.exception.ComponentReservedParamException;
 import org.opendevstack.apiservice.project.exception.ComponentReservedParamException;
 import org.opendevstack.apiservice.project.mapper.MarketplaceMapper;
 import org.opendevstack.apiservice.project.model.Component;
@@ -30,7 +29,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -63,7 +61,7 @@ class ComponentsFacadeTest {
 
     @Test
     void get_project_component_returns_mapped_component_when_marketplace_returns_data() throws MarketplaceException {
-        ProjectComponentExtendedInfo marketplaceComponent = buildTestMarketplaceComponent();
+        ProjectComponentProvisionStatus marketplaceComponent = buildTestMarketplaceComponent();
         CatalogItem testCatalogItem = buildTestCatalogItem();
 
         when(marketplaceExternalService.getProjectComponent("testProject", "testComponent"))
