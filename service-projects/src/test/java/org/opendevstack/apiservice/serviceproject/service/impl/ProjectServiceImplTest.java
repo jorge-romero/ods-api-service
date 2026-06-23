@@ -3,6 +3,7 @@ package org.opendevstack.apiservice.serviceproject.service.impl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockitoAnnotations;
 import org.opendevstack.apiservice.persistence.entity.ProjectEntity;
 import org.opendevstack.apiservice.persistence.repository.ProjectRepository;
@@ -188,5 +189,47 @@ class ProjectServiceImplTest {
         assertEquals(0, result.size());
         verify(projectRepository).findByProjectNameIgnoreCase(projectName);
         verify(projectResponseMapper).toCreateProjectResponse(anyList());
+    }
+
+    @Test
+    void update_project_status_saves_entity_with_new_status_when_project_exists() {
+        String projectKey = "PROJ01";
+        ProjectEntity entity = ProjectEntity.builder()
+                .id(UUID.randomUUID())
+                .projectKey(projectKey)
+                .projectName("My Project")
+                .status("Pending")
+                .build();
+
+        when(projectRepository.findByProjectKeyIgnoreCase(projectKey)).thenReturn(Optional.of(entity));
+
+        projectService.updateProjectStatus(projectKey, "Running");
+
+        ArgumentCaptor<ProjectEntity> captor = ArgumentCaptor.forClass(ProjectEntity.class);
+        verify(projectRepository).save(captor.capture());
+        assertEquals("Running", captor.getValue().getStatus());
+    }
+
+    @Test
+    void update_project_status_does_nothing_when_project_not_found() {
+        String projectKey = "UNKNOWN";
+
+        when(projectRepository.findByProjectKeyIgnoreCase(projectKey)).thenReturn(Optional.empty());
+
+        projectService.updateProjectStatus(projectKey, "Running");
+
+        verify(projectRepository, never()).save(any(ProjectEntity.class));
+    }
+
+    @Test
+    void update_project_status_propagates_repository_exception() {
+        String projectKey = "ERROR";
+
+        when(projectRepository.findByProjectKeyIgnoreCase(projectKey))
+                .thenThrow(new RuntimeException("DB error"));
+
+        assertThrows(RuntimeException.class, () -> projectService.updateProjectStatus(projectKey, "Running"));
+
+        verify(projectRepository).findByProjectKeyIgnoreCase(projectKey);
     }
 }

@@ -1,11 +1,15 @@
 package org.opendevstack.apiservice.project.validation;
 
 import org.opendevstack.apiservice.project.exception.ErrorKey;
+import org.opendevstack.apiservice.project.exception.ProjectUpdateValidationException;
 import org.opendevstack.apiservice.project.exception.ProjectValidationException;
 import org.opendevstack.apiservice.project.model.CreateProjectRequest;
+import org.opendevstack.apiservice.project.model.UpdateProjectRequest;
+import org.opendevstack.apiservice.serviceproject.model.Status;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -14,10 +18,14 @@ public class ProjectRequestValidator {
     @Value("${apis.projects.locations}")
     private List<String> locations;
     
-    public void validate(CreateProjectRequest request) {
+    public void validateCreateRequest(CreateProjectRequest request) {
         validateFlavorOrConfigItem(request);
         validateOwnerIfX2AccountIsPresent(request);
         validateLocation(request);
+    }
+
+    public void validateUpdateRequest(UpdateProjectRequest request) {
+        validateStatus(request);
     }
     
     private void validateFlavorOrConfigItem(CreateProjectRequest request) {
@@ -58,6 +66,22 @@ public class ProjectRequestValidator {
         if (!locations.contains(location)) {
             throw new ProjectValidationException(ErrorKey.INVALID_LOCATION, 
                 String.join(", ", locations));
+        }
+    }
+
+    private void validateStatus(UpdateProjectRequest request) {
+        String status = request.getStatus();
+
+        if (status == null || status.trim().isEmpty()) {
+            return;
+        }
+
+        List<String> statusList = Arrays.stream(Status.values())
+                .map(e -> e.getDbValue())
+                .toList();
+        if (!statusList.contains(status)) {
+            throw new ProjectUpdateValidationException(ErrorKey.INVALID_STATUS,
+                String.join(", ", statusList));
         }
     }
 }

@@ -11,6 +11,7 @@ import org.opendevstack.apiservice.project.mapper.ProjectCreationResponseMapper;
 import org.opendevstack.apiservice.project.mapper.ProjectMapper;
 import org.opendevstack.apiservice.project.model.CreateProjectRequest;
 import org.opendevstack.apiservice.project.model.CreateProjectResponse;
+import org.opendevstack.apiservice.project.model.UpdateProjectRequest;
 import org.opendevstack.apiservice.project.service.ClientAppService;
 import org.opendevstack.apiservice.serviceproject.model.ProjectRequest;
 import org.opendevstack.apiservice.serviceproject.model.ProjectResponse;
@@ -82,6 +83,11 @@ public class ProjectsFacadeImpl implements ProjectsFacade {
     @Override
     public CreateProjectResponse getProject(String projectKey) {
         return projectMapper.toApiResponse(projectService.getProject(projectKey));
+    }
+
+    @Override
+    public void updateProject(String projectKey, UpdateProjectRequest request) {
+        projectService.updateProjectStatus(projectKey, request.getStatus());
     }
 
     private ProjectResponse registerProject(ProjectCreationCommand command) {

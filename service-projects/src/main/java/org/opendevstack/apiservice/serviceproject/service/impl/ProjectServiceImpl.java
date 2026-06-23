@@ -63,6 +63,17 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    public void updateProjectStatus(String projectKey, String status) {
+        Optional<ProjectEntity> project = projectRepository.findByProjectKeyIgnoreCase(projectKey);
+
+        if (project.isPresent()) {
+            ProjectEntity entity = project.get();
+            entity.setStatus(status);
+            projectRepository.save(entity);
+        }
+    }
+
+    @Override
     public List<ProjectResponse> findProjectsByName(String projectName) {
         List<ProjectEntity> projects = projectRepository.findByProjectNameIgnoreCase(projectName);
         return projectResponseMapper.toCreateProjectResponse(projects);

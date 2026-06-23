@@ -10,6 +10,8 @@ public interface ProjectService {
     ProjectResponse saveProject(ProjectRequest request);
 
     ProjectResponse getProject(String projectKey);
+
+    void updateProjectStatus(String projectKey, String status);
     
     List<ProjectResponse> findProjectsByName(String projectName);
 }

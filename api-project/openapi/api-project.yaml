@@ -12,7 +12,7 @@ servers:
         default: localhost:8080
         description: Development environment
 tags:
-- name: Project
+- name: Projects
   description: API for manage EDP projects.
 paths:
   /projects:

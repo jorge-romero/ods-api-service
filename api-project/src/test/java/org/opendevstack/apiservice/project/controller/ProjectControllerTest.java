@@ -75,7 +75,7 @@ class ProjectControllerTest {
         assertThat(result.getBody().getError()).isNull();
         assertThat(result.getBody().getErrorKey()).isEqualTo("000");
         assertThat(result.getBody().getErrorDescription()).isNull();
-        verify(projectRequestValidator).validate(request);
+        verify(projectRequestValidator).validateCreateRequest(request);
         verify(projectsFacade).createProject(any(CreateProjectRequest.class), any(UUID.class));
     }
 

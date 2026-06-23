@@ -37,7 +37,7 @@ public class ProjectController implements ProjectsApi {
     @PostMapping
     @Override
     public ResponseEntity<CreateProjectResponse> createProject(@Valid @RequestBody CreateProjectRequest createProjectRequest) {
-        projectRequestValidator.validate(createProjectRequest);
+        projectRequestValidator.validateCreateRequest(createProjectRequest);
         UUID clientId = JwtUtils.getClientId();
 
         CreateProjectResponse projectResponse = projectsFacade.createProject(createProjectRequest, clientId);

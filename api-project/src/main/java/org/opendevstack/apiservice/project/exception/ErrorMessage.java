@@ -9,6 +9,7 @@ public class ErrorMessage {
     public static final String SUCCESS = "Success";
     
     public static final String INVALID_LOCATION = "Incorrect location. Valid locations are:";
+    public static final String INVALID_STATUS = "Incorrect status. Valid status are:";
     public static final String RECORD_ALREADY_EXISTS = "Record already exists";
     public static final String PROJECT_KEY_NOT_MET_THE_PATTERN = "projectKey not met the pattern ^[A-Z] {2}[A-Z0-9] {1,8}$";
     public static final String PROJECT_NAME_NOT_MET_THE_PATTERN = "projectName not met the pattern ^[A-Za-z0-9 ] {0,80}$";
