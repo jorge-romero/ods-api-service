@@ -11,7 +11,7 @@ public interface ProjectCreationResponseMapper {
 
     @Mapping(target = "message", constant = "The project creation process has been successfully initiated.")
     @Mapping(target = "status", ignore = true)
-    @Mapping(target = "httStatus", constant = "OK")
+    @Mapping(target = "httpStatus", constant = "OK")
     @Mapping(target = "errorKey", constant = "000")
     @Mapping(target = "projectKey", source = "project.projectKey")
     @Mapping(target = "projectFlavor", ignore = true)

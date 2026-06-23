@@ -166,7 +166,7 @@ components:
       properties:
         projectKey:
           type: string
-        httStatus:
+        httpStatus:
           type: string
         status:
           type: string
