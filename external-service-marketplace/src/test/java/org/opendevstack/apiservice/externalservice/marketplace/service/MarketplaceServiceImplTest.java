@@ -88,6 +88,7 @@ class MarketplaceServiceImplTest {
         Jwt jwt = Jwt.withTokenValue("test-jwt-assertion")
                 .header("alg", "RS256")
                 .claim("azp", "test-client-id")
+                .claim("aud", "api://different-app")
                 .issuedAt(Instant.now())
                 .expiresAt(Instant.now().plusSeconds(3600))
                 .build();

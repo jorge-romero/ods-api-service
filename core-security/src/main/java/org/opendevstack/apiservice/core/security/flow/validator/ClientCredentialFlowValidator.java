@@ -15,8 +15,10 @@ public class ClientCredentialFlowValidator implements AuthFlowValidator {
 
     @Override
     public boolean validate(Jwt jwt) {
+        // v1 tokens use "appid", v2 tokens use "azp"; either is acceptable
         String appid = jwt.getClaimAsString("appid");
-        if (appid == null || appid.isBlank()) {
+        String azp = jwt.getClaimAsString("azp");
+        if ((appid == null || appid.isBlank()) && (azp == null || azp.isBlank())) {
             return false;
         }
 

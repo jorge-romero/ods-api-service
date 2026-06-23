@@ -9,11 +9,14 @@ import org.springframework.security.oauth2.server.resource.InvalidBearerTokenExc
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -112,6 +115,134 @@ class JwtUtilsTest {
 
         // THEN
         assertEquals(UUID.fromString(clientId), result);
+    }
+
+    @Test
+    void extract_audiences_supports_single_string_claim() {
+        // GIVEN
+        Jwt jwt = buildJwt("token", Map.of("aud", "aud-1"));
+
+        // WHEN
+        List<String> audiences = JwtUtils.extractAudiences(jwt);
+
+        // THEN
+        assertEquals(List.of("aud-1"), audiences);
+    }
+
+    @Test
+    void extract_audiences_supports_list_claim() {
+        // GIVEN
+        Jwt jwt = buildJwt("token", Map.of("aud", List.of("aud-1", "aud-2")));
+
+        // WHEN
+        List<String> audiences = JwtUtils.extractAudiences(jwt);
+
+        // THEN
+        assertEquals(List.of("aud-1", "aud-2"), audiences);
+    }
+
+    @Test
+    void token_matches_scope_audience_when_audience_and_scope_match_bypass() {
+        // GIVEN
+        Jwt jwt = buildJwt("token", Map.of(
+                "aud", "6d81fd84-9b38-4aed-9403-ed95f6395cd7",
+                "scp", "Api.Access"));
+        setSecurityContext(jwt);
+
+        // WHEN
+        boolean result = JwtUtils.tokenMatchesScopeAudience(
+                "6d81fd84-9b38-4aed-9403-ed95f6395cd7", "Api.Access");
+
+        // THEN
+        assertTrue(result);
+    }
+
+    @Test
+    void token_matches_scope_audience_when_scope_is_one_of_several_scp_values() {
+        // GIVEN
+        Jwt jwt = buildJwt("token", Map.of(
+                "aud", "api://6d81fd84-9b38-4aed-9403-ed95f6395cd7",
+                "scp", "User.Read Api.Access Files.Read"));
+        setSecurityContext(jwt);
+
+        // WHEN
+        boolean result = JwtUtils.tokenMatchesScopeAudience(
+                "api://6d81fd84-9b38-4aed-9403-ed95f6395cd7", "Api.Access");
+
+        // THEN
+        assertTrue(result);
+    }
+
+    @Test
+    void token_matches_scope_audience_returns_false_when_audience_does_not_match() {
+        // GIVEN
+        Jwt jwt = buildJwt("token", Map.of(
+                "aud", "api://another-app",
+                "scp", "Api.Access"));
+        setSecurityContext(jwt);
+
+        // WHEN
+        boolean result = JwtUtils.tokenMatchesScopeAudience(
+                "6d81fd84-9b38-4aed-9403-ed95f6395cd7", "Api.Access");
+
+        // THEN
+        assertFalse(result);
+    }
+
+    @Test
+    void token_matches_scope_audience_returns_false_when_scope_does_not_match() {
+        // GIVEN
+        Jwt jwt = buildJwt("token", Map.of(
+                "aud", "6d81fd84-9b38-4aed-9403-ed95f6395cd7",
+                "scp", "User.Read"));
+        setSecurityContext(jwt);
+
+        // WHEN
+        boolean result = JwtUtils.tokenMatchesScopeAudience(
+                "6d81fd84-9b38-4aed-9403-ed95f6395cd7", "Api.Access");
+
+        // THEN
+        assertFalse(result);
+    }
+
+    @Test
+    void token_matches_scope_audience_returns_false_when_bypass_values_are_blank() {
+        // GIVEN
+        Jwt jwt = buildJwt("token", Map.of(
+                "aud", "6d81fd84-9b38-4aed-9403-ed95f6395cd7",
+                "scp", "Api.Access"));
+        setSecurityContext(jwt);
+
+        // WHEN / THEN
+        assertFalse(JwtUtils.tokenMatchesScopeAudience("", "Api.Access"));
+        assertFalse(JwtUtils.tokenMatchesScopeAudience("6d81fd84-9b38-4aed-9403-ed95f6395cd7", ""));
+        assertFalse(JwtUtils.tokenMatchesScopeAudience(null, null));
+    }
+
+    @Test
+    void extract_scopes_splits_scp_claim_by_whitespace() {
+        // GIVEN
+        Jwt jwt = buildJwt("token", Map.of("scp", "User.Read Api.Access"));
+
+        // WHEN
+        var scopes = JwtUtils.extractScopes(jwt);
+
+        // THEN
+        assertTrue(scopes.contains("User.Read"));
+        assertTrue(scopes.contains("Api.Access"));
+        assertEquals(2, scopes.size());
+    }
+
+    @Test
+    void extract_scopes_returns_empty_set_when_scp_claim_absent() {
+        // GIVEN
+        Jwt jwt = buildJwt("token", Map.of("aud", "some-audience"));
+
+        // WHEN
+        var scopes = JwtUtils.extractScopes(jwt);
+
+        // THEN
+        assertTrue(scopes.isEmpty());
     }
 
     private Jwt buildJwt(String tokenValue, Map<String, Object> claims) {

@@ -50,4 +50,27 @@ public class MarketplaceInstanceConfig {
      * Example: {@code api://<marketplace-app-id>/Api.Access}
      */
     private String oboScope;
+
+    /**
+     * Bypass configuration. When the incoming token already targets the configured bypass
+     * audience and scope, the OBO token exchange is skipped and the token is forwarded as-is.
+     */
+    private Bypass bypass = new Bypass();
+
+    /**
+     * Audience and scope used to decide whether the incoming token can be forwarded without
+     * an OBO exchange.
+     */
+    @Data
+    public static class Bypass {
+        /**
+         * Audience that must be present in the token {@code aud} claim to allow the bypass.
+         */
+        private String audience;
+
+        /**
+         * Scope that must be present in the token {@code scp} claim to allow the bypass.
+         */
+        private String scope;
+    }
 }

@@ -346,14 +346,23 @@ public class MarketplaceServiceImpl implements MarketplaceService {
     private MarketplaceApiClient getOboAuthenticatedClient(String instanceName) throws MarketplaceException {
         MarketplaceApiClient client = clientFactory.getClient(instanceName);
         String oboScope = client.getConfig().getOboScope();
+        String assertion = JwtUtils.getTokenValue();
         if (oboScope == null || oboScope.isBlank()) {
             throw new MarketplaceException(
                     String.format("OBO scope not configured for Marketplace instance '%s'", instanceName));
         }
-        String assertion = JwtUtils.getTokenValue();
-        final String oboToken;
+        MarketplaceInstanceConfig.Bypass bypass = client.getConfig().getBypass();
+        if (bypass != null && JwtUtils.tokenMatchesScopeAudience(bypass.getAudience(), bypass.getScope())) {
+            client.setBearerToken(assertion);
+        } else {
+            client.setBearerToken(getOboToken(instanceName, assertion, oboScope));
+        }
+        return client;
+    }
+
+    private String getOboToken(String instanceName, String assertion, String oboScope) throws MarketplaceException {
         try {
-            oboToken = oboTokenService.exchangeToken(assertion, oboScope);
+            return oboTokenService.exchangeToken(assertion, oboScope);
         } catch (RuntimeException ex) {
             throw new MarketplaceException(
                     String.format(
@@ -361,7 +370,5 @@ public class MarketplaceServiceImpl implements MarketplaceService {
                             instanceName, oboScope),
                     ex);
         }
-        client.setBearerToken(oboToken);
-        return client;
     }
 }
