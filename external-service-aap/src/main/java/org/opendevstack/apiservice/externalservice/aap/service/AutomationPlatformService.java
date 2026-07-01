@@ -22,7 +22,7 @@ public interface AutomationPlatformService extends ExternalService {
      * @return the execution result
      * @throws AutomationPlatformException if workflow execution fails
      */
-    AutomationExecutionResult executeWorkflow(String workflowName, Map<String, Object> parameters) throws AutomationPlatformException;
+    AutomationExecutionResult executeWorkflow(String workflowName, Map<String, Object> parameters);
 
     /**
      * Executes a workflow on the automation platform asynchronously.
@@ -50,7 +50,7 @@ public interface AutomationPlatformService extends ExternalService {
      * @return the workflow job status and result
      * @throws AutomationPlatformException if status check fails
      */
-    AutomationJobStatus getWorkflowJobStatus(String workflowId) throws AutomationPlatformException;
+    AutomationJobStatus getWorkflowJobStatus(String workflowId);
 
 
     /**

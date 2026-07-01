@@ -1,0 +1,28 @@
+# Liquibase connection properties — LOCAL DEVELOPMENT TEMPLATE
+#
+# Copy this file to liquibase.properties and fill in real values.
+#   cp liquibase.properties.example liquibase.properties
+#
+# The file liquibase.properties is git-ignored and MUST NOT be committed.
+# In CI/CD pipelines the connection is passed via environment variables
+# that the Makefile forwards as -D flags to Maven (see 'make help' for details).
+#
+# Required environment variables used by the Makefile db-* targets:
+#   ODS_API_SERVICE_DB_HOST      PostgreSQL hostname or IP
+#   ODS_API_SERVICE_DB_PORT      PostgreSQL port (default: 5432)
+#   ODS_API_SERVICE_DB_NAME      Database name     → ods_api_service
+#   ODS_API_SERVICE_DB_USER      Application user  → ods_api_service
+#   ODS_API_SERVICE_DB_PASSWORD  Application user password (plain text)
+#
+# The Kubernetes Secret holds the Base64-encoded equivalents:
+#   ODS_API_SERVICE_DB_NAME_B64
+#   ODS_API_SERVICE_DB_USER_B64
+#   ODS_API_SERVICE_DB_PASSWORD_B64
+#   ODS_API_SERVICE_DB_SUPER_PASSWORD_B64
+# ---------------------------------------------------------------------------
+
+export ODS_API_SERVICE_DB_HOST=localhost
+export ODS_API_SERVICE_DB_PORT=5432
+export ODS_API_SERVICE_DB_NAME=ods_api_service
+export ODS_API_SERVICE_DB_USER=ods_api_service
+export ODS_API_SERVICE_DB_PASSWORD=changeme

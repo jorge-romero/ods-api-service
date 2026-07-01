@@ -16,7 +16,7 @@ tags:
 - name: Project Users
   description: API for managing project users and their roles
 paths:
-  /project/{projectKey}/users:
+  /projects/{projectKey}/users:
     post:
       tags:
       - Project Users
@@ -89,7 +89,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiResponseMembershipRequestResponse"
-  /project/{projectKey}/users/{userid}/status:
+  /projects/{projectKey}/users/{userid}/status:
     get:
       tags:
       - Project Users

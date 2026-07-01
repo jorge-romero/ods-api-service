@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.opendevstack.apiservice</groupId>
         <artifactId>devstack-api-service</artifactId>
-        <version>0.0.2</version>
+        <version>0.0.3</version>
     </parent>
 
     <artifactId>core</artifactId>
@@ -30,6 +30,13 @@
             <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
         </dependency>
 
+        <!-- Core Security module: Security configuration and JWT handling -->
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>core-security</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>
@@ -39,6 +46,14 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Spring Boot DevTools for fast restart during development -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
         </dependency>
 
         <!-- External Service API -->
@@ -103,7 +118,25 @@
 
         <dependency>
             <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>external-service-marketplace</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
             <artifactId>api-project-users</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>api-project</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>api-project-component-v0</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -111,6 +144,27 @@
             <groupId>org.opendevstack.apiservice</groupId>
             <artifactId>api-project-platform</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        
+        <!-- Service Projects module: project creation and key generation -->
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>service-projects</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Persistence module: JPA entities and Spring Data repositories -->
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>persistence</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- PostgreSQL JDBC driver (runtime) -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- OpenTelemetry for observability -->
@@ -145,6 +199,7 @@
                 <configuration>
                     <mainClass>org.opendevstack.apiservice.core.DevstackApiServiceApplication</mainClass>
                     <outputDirectory>../docker</outputDirectory>
+                    <workingDirectory>${project.parent.basedir}</workingDirectory>
                 </configuration>
                 <executions>
                     <execution>

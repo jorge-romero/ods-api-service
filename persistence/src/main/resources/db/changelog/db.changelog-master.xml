@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-5.0.xsd">
+
+    <!--
+        Master changelog for ods-api-service database.
+
+        All migration scripts live under the migrations/ directory and are discovered
+        in lexical (alphabetical) order.  New migrations must be named with a
+        zero-padded sequential prefix, e.g.:
+            003_add_column_to_projects.sql
+            004_create_audit_log_table.sql
+
+        Rules:
+          - Never edit an already-applied changeset.
+          - Always add new changesets in a new file at the end of the sequence.
+          - Use rollback statements in every changeset so 'make db-rollback' works.
+    -->
+
+    <includeAll path="migrations/" relativeToChangelogFile="true" />
+
+</databaseChangeLog>

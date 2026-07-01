@@ -5,9 +5,29 @@ All notable changes to the DevStack API Service project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+#### Security (`core-security`)
+- Support for **multiple JWT issuers**: each trusted issuer pairs an issuer URI (`iss` claim) with a JWK set URI, selected by the incoming token's `iss` claim (`OAUTH2_ISSUER_V1`/`OAUTH2_JWK_SET_URI_V1`, `OAUTH2_ISSUER_V2`/`OAUTH2_JWK_SET_URI_V2`).
+- Shared **audience validation** across all configured issuers (`OAUTH2_AUDIENCE`, `OAUTH2_AUDIENCE2`); a valid token must carry at least one accepted `aud` value.
+- `JwtUtils` audience and scope extraction helpers, including `tokenMatchesScopeAudience` to detect tokens that already target a given audience and scope.
+
+#### External Service Marketplace (`external-service-marketplace`)
+- **OBO exchange bypass**: when the incoming token already targets the configured bypass audience and scope, the token is forwarded as-is instead of performing an On-Behalf-Of exchange (`MARKETPLACE_BYPASS_AUDIENCE`, `MARKETPLACE_BYPASS_SCOPE`).
+
+### Changed
+- Refactored `SecurityConfig` to resolve the authentication manager per issuer using `JwtIssuerAuthenticationManagerResolver`.
+- Moved OAuth2 resource server configuration from Spring's `spring.security.oauth2.resourceserver` properties to application-managed `app` security properties.
+- `ClientCredentialFlowValidator` now accepts the client identifier from either the `appid` (v1 tokens) or `azp` (v2 tokens) claim.
+
 ## [0.0.3] - 2026-03-03
 
 ### Added
+
+- Created **New API module** for managing EDP Projects with create and retrieve endpoints.
+- Created **New module** external service projects to manage EDP Projects.
 
 ### External Service Jira (`external-service-jira`)
 - **New module** for checking project existance in Jira (Server)
@@ -22,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Health Monitoring & Observability
 - **Spring Boot Actuator** health indicators for all external services:
 
+#### Persistance to keep project lifecycle
+
 ### Changed
 - Updated all external service implementations to extend `ExternalService` interface
 - Use of lombok.extern.slf4j.Slf4j to remove boilerplate code.
@@ -32,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated Spring Boot version
 - Added health indicator dependencies across external service modules
 
-## [0.0.2] - 2026-03-03
+## [0.0.3] - 2026-03-03
 
 ### Changed
 ##### Projects Info Service

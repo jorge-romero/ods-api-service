@@ -14,7 +14,7 @@
     <groupId>org.opendevstack.apiservice</groupId>
     <artifactId>devstack-api-service</artifactId>
     <name>Devstack API Service</name>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
 
     <properties>
         <java.version>21</java.version>
@@ -36,6 +36,7 @@
         <spring-javaformat-maven-plugin.version>0.0.47</spring-javaformat-maven-plugin.version>
         <jackson-databind-nullable.version>0.2.7</jackson-databind-nullable.version>
         <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
+        <mapstruct.version>1.6.3</mapstruct.version>
 
         <!-- Test execution -->
         <jacoco.agent.argLine>
@@ -44,16 +45,23 @@
 
     <modules>
         <module>external-service-api</module>
+        <module>persistence</module>
         <module>core</module>
+        <module>core-contracts</module>
+        <module>core-security</module>
         <module>external-service-aap</module>
         <module>external-service-projects-info-service</module>
         <module>external-service-uipath</module>
         <module>external-service-ocp</module>
         <module>external-service-bitbucket</module>
         <module>external-service-jira</module>
+        <module>external-service-marketplace</module>
         <module>external-service-webhookproxy</module>
+        <module>service-projects</module>
         <module>api-project-users</module>
         <module>api-project-platform</module>
+        <module>api-project</module>
+        <module>api-project-component-v0</module>
     </modules>
 
     <dependencyManagement>
@@ -173,8 +181,7 @@
                         <include>**/*Test.java</include>
                     </includes>
                     <systemPropertyVariables>
-                        <spring.config.location>
-                            ../application.yaml</spring.config.location>
+                        <spring.config.location>${SPRING_CONFIG_DIR}</spring.config.location>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>

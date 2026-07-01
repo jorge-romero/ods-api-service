@@ -9,6 +9,7 @@ The system will expose RESTful APIs for third-party client applications and futu
 - [Quick Start](#quick-start)
 - [Build Options](#build-options)
 - [Running the Application](#running-the-application)
+- [Security & Authentication](#security--authentication)
 - [Development Workflow](#development-workflow)
 - [Docker Support](#docker-support)
 - [Advanced Usage](#advanced-usage)
@@ -19,7 +20,7 @@ The system will expose RESTful APIs for third-party client applications and futu
 Before using the Makefile, ensure you have the following installed:
 
 ### Required
-- **Java 17+** - The project uses Java 21
+- **Java 21+** - The project uses Java 21
 - **Maven** - Maven wrapper (`mvnw`) is included in the project
 - **Make** - For running Makefile commands
 
@@ -54,7 +55,7 @@ Build a traditional Spring Boot JAR file:
 ```bash
 make jar
 ```
-- Output: `core/target/core-0.0.2-SNAPSHOT.jar`
+- Output: `core/target/core-0.0.3.jar`
 - Includes all dependencies
 - Standard Spring Boot startup time
 
@@ -112,7 +113,48 @@ Once running, the application is available at:
 - **Swagger UI**: http://localhost:8080/swagger-ui.html
 - **Actuator Health**: http://localhost:8080/actuator/health
 
-## 💻 Development Workflow
+## � Security & Authentication
+
+The service is an OAuth2 Resource Server that validates incoming JWT access tokens.
+Authentication is configured entirely through environment variables.
+
+### Multiple JWT Issuers
+
+The API accepts tokens from more than one trusted identity provider. Each issuer
+pairs an issuer URI (the token `iss` claim) with the JWK set URI used to validate
+the token signature. The incoming token's `iss` claim selects the matching issuer.
+
+| Variable | Description |
+|----------|-------------|
+| `OAUTH2_ISSUER_V1` | Issuer URI (`iss` claim) of the first trusted identity provider |
+| `OAUTH2_JWK_SET_URI_V1` | JWK set URI used to verify signatures for issuer V1 |
+| `OAUTH2_ISSUER_V2` | Issuer URI (`iss` claim) of the second trusted identity provider |
+| `OAUTH2_JWK_SET_URI_V2` | JWK set URI used to verify signatures for issuer V2 |
+
+### Allowed Audiences
+
+Audiences are shared across all configured issuers. A valid token must carry at
+least one of these values in its `aud` claim.
+
+| Variable | Description |
+|----------|-------------|
+| `OAUTH2_AUDIENCE` | First accepted audience value |
+| `OAUTH2_AUDIENCE2` | Second accepted audience value |
+
+### Marketplace OBO Bypass
+
+Calls to the Marketplace service normally perform an On-Behalf-Of (OBO) token
+exchange. When the incoming token already targets the configured bypass audience
+and scope, the OBO exchange is skipped and the token is forwarded as-is.
+
+| Variable | Description |
+|----------|-------------|
+| `MARKETPLACE_BYPASS_AUDIENCE` | Audience that must be present in the token `aud` claim to skip the OBO exchange |
+| `MARKETPLACE_BYPASS_SCOPE` | Scope that must be present in the token `scp` claim to skip the OBO exchange |
+
+> If either bypass value is unset, the OBO exchange is always performed.
+
+## �💻 Development Workflow
 
 ### Quick Development Cycle
 Clean, compile, and test in one command:

@@ -1,0 +1,118 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.opendevstack.apiservice</groupId>
+        <artifactId>devstack-api-service</artifactId>
+        <version>0.0.3</version>
+    </parent>
+
+    <artifactId>persistence</artifactId>
+    <name>Persistence</name>
+    <description>JPA entities, Spring Data repositories, database schema migrations and persistence utilities for the Devstack API Service</description>
+
+    <properties>
+        <liquibase.version>5.0.1</liquibase.version>
+        <postgresql.version>42.7.10</postgresql.version>
+        <!-- Connection properties — always overridden at runtime via -D flags from the Makefile.
+             These defaults exist only to let 'mvn liquibase:validate' pass without a live DB. -->
+        <liquibase.url>jdbc:postgresql://localhost:5432/ods_api_service</liquibase.url>
+        <liquibase.username>ods_api_service</liquibase.username>
+        <liquibase.password />
+        <liquibase.driver>org.postgresql.Driver</liquibase.driver>
+        <liquibase.changeLogFile>src/main/resources/db/changelog/db.changelog-master.xml</liquibase.changeLogFile>
+        <liquibase.outputChangeLogFile>src/main/resources/db/changelog/db.changelog-generated.xml</liquibase.outputChangeLogFile>
+        <liquibase.verbose>true</liquibase.verbose>
+    </properties>
+
+    <dependencies>
+
+        <!-- Spring Data JPA + Hibernate 6 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- Lombok for reducing boilerplate code -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.opendevstack.apiservice</groupId>
+            <artifactId>core-contracts</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testcontainers: PostgreSQL instance spun up per-test-run -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testcontainers JUnit 5 integration -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- PostgreSQL JDBC driver (test scope — runtime is provided by core) -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Skip Spring Boot repackaging — this is a library module -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+
+            <!-- Liquibase Maven plugin for database schema migrations -->
+            <plugin>
+                <groupId>org.liquibase</groupId>
+                <artifactId>liquibase-maven-plugin</artifactId>
+                <version>${liquibase.version}</version>
+                <configuration>
+                    <driver>${liquibase.driver}</driver>
+                    <url>${liquibase.url}</url>
+                    <username>${liquibase.username}</username>
+                    <password>${liquibase.password}</password>
+                    <changeLogFile>${liquibase.changeLogFile}</changeLogFile>
+                    <outputChangeLogFile>${liquibase.outputChangeLogFile}</outputChangeLogFile>
+                    <verbose>${liquibase.verbose}</verbose>
+                </configuration>
+                <dependencies>
+                    <!-- PostgreSQL JDBC driver on the plugin classpath -->
+                    <dependency>
+                        <groupId>org.postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                        <version>${postgresql.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

@@ -1,0 +1,226 @@
+openapi: 3.0.3
+info:
+  title: ODS API Server
+  description: API documentation for ODS (Open DevStack) API Service
+  contact:
+    name: ODS Team
+  version: v0.0.1
+servers:
+  - url: http://{baseurl}/api/pub/v0
+    variables:
+      baseurl:
+        default: localhost:8080
+        description: Development environment
+tags:
+  - name: Project Components
+    description: API for managing project components
+
+paths:
+  /projects/{projectId}/components/:
+    post:
+      tags:
+        - Project Components
+      summary: Create a component in a project
+      operationId: createProjectComponent
+      description: Retrieves information about a specific component
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project key
+          schema:
+            type: string
+      requestBody:
+        description: Component data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateComponentRequest'
+      responses:
+        '200':
+          description: OK
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateComponentResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateComponentResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden
+        '404':
+          description: Endpoint not found / Project not found / Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateComponentResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateComponentResponse'
+
+  /projects/{projectId}/components/{componentId}:
+    get:
+      tags:
+        - Project Components
+      summary: Get component information
+      operationId: getProjectComponent
+      description: Retrieves information about a specific component
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project key
+          schema:
+            type: string
+        - name: componentId
+          in: path
+          required: true
+          description: Component id
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Component information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Component'
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    UnauthorizedError:
+      description: Authentication information is missing or invalid
+      headers:
+        WWW_Authenticate:
+          schema:
+            type: string
+  schemas:
+    Component:
+      type: object
+      x-class-extra-annotation: |
+        @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+      required:
+        - params
+      properties:
+        id:
+          type: string
+          description: Component ID
+        name:
+          type: string
+          description: Name of the component
+        productDescription:
+          type: string
+          description: Description of the product
+        productName:
+          type: string
+          description: Name of the product
+        productId:
+          type: string
+          description: Product ID
+        environment:
+          $ref: '#/components/schemas/EnvironmentsDTO'
+          description: Environment
+        status:
+          $ref: '#/components/schemas/ComponentsStatusDTO'
+          description: Status of the component
+        resultTraceback:
+          type: object
+          nullable: true
+          description: Traceback information in case of error
+          x-field-extra-annotation: |
+            @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY)
+        repositoryURL:
+          type: string
+          description: URL of the repository (for ODS products)
+        params:
+          type: object
+          description: Additional parameters (key-value pairs)
+          additionalProperties: true
+        component-type:
+          type: string
+          description: Type of component (ods|awx)
+    CreateComponentResponse:
+      type: object
+      required:
+        - timestamp
+        - httpStatus
+        - errorKey
+        - message
+        - path
+      properties:
+        timestamp:
+          type: integer
+          format: int64
+        httpStatus:
+          type: string
+        errorKey:
+          type: string
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+    CreateComponentRequest:
+      type: object
+      required:
+        - name
+        - productId
+        - params
+      properties:
+        name:
+          type: string
+          description: Component name
+          minLength: 2
+          maxLength: 52
+          pattern: "^[a-z]+(-?[a-z0-9]+)*$"
+          x-field-extra-annotation: |
+            @Size(min=2, message = "The component name must contain more than 1 character.")
+            @Size(max=52, message = "The component name must contain less than 53 characters.")
+            @Pattern(regexp = "^[a-z]+(-?[a-z0-9]+)*$", message = "Only lowercase letters and numbers are allowed (example: componentname8), with optional dashes in between (example: my-component). The first character must be a letter.")
+        productId:
+          type: string
+          description: Product id
+        registerOnly:
+          type: boolean
+          description: Register only flag (no provisioning)
+          default: false
+        params:
+          type: object
+          description: Additional parameters (key-value pairs)
+          additionalProperties: true
+    EnvironmentsDTO:
+      type: string
+      enum:
+        - DEV
+        - QA
+        - PROD
+    ComponentsStatusDTO:
+      type: string
+      enum:
+        - READY
+        - RUNNING
+        - FAILED
+        - DELETING
+        - DELETED
+        - UNKNOWN

@@ -1,0 +1,63 @@
+openapi: 3.0.3
+info:
+  title: ODS API Server
+  description: API documentation for ODS (Open DevStack) API Service
+  contact:
+    name: ODS Team
+  version: v0.0.1
+servers:
+  - url: http://{baseurl}/api/pub/v0
+    variables:
+      baseurl:
+        default: localhost:8080
+        description: Development environment
+tags:
+- name: Projects Internal
+  description: API for manage EDP projects with extended methods
+paths:
+  /projects/{projectKey}:
+    patch:
+      tags:
+        - Projects Internal
+      summary: Updates projects by project key.
+      description: Updates the current status and details of the project identified by the given project key.
+      operationId: updateProject
+      parameters:
+        - name: projectKey
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project key to retrieve information.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectRequest'
+      responses:
+        '204':
+          description: Project information updated successfully or no project found for the provided projectKey.
+        "400":
+          description: Bad Request.
+        "401":
+          description: Invalid client token on the request.
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+        '500':
+          description: Internal server error.
+components:
+  schemas:
+    RestErrorMessage:
+      properties:
+        message:
+          type: string
+      required:
+        - message
+    UpdateProjectRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Status of the project. If not in the allowed list, error INVALID_STATUS (030) is returned.
+      additionalProperties: false
